@@ -16,7 +16,7 @@ import { useAuth } from '../../hooks/useAuth';
 
 
 export default function AddVehicleScreen() {
-  const { spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const navigation = useNavigation();
   const { getCurrentUserId } = useAuth();
 
@@ -215,20 +215,28 @@ export default function AddVehicleScreen() {
   }, [form, validate, submitOperation, navigation, getCurrentUserId]);
 
   return (
-    <ScreenContainer padding={false}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
-      >
-        <ScrollView
-          contentContainerStyle={{ padding: spacing(2) }}
-          keyboardShouldPersistTaps="handled"
+    <>
+      <View style={{ 
+        backgroundColor: colors.background, 
+        paddingTop: spacing(2),
+        paddingHorizontal: spacing(2)
+      }}>
+        <ScreenHeader
+          title="Ajouter un véhicule"
+          subtitle="Sélectionnez le type, la marque et la cylindrée via recherche, puis complétez les informations."
+        />
+      </View>
+      
+      <ScreenContainer padding={false} edges={['bottom', 'left', 'right']}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
         >
-          <ScreenHeader
-            title="Ajouter un véhicule"
-            subtitle="Sélectionnez le type, la marque et la cylindrée via recherche, puis complétez les informations."
-          />
+          <ScrollView
+            contentContainerStyle={{ padding: spacing(2), paddingTop: spacing(1) }}
+            keyboardShouldPersistTaps="handled"
+          >
 
           <SuggestionField
             label="Type de véhicule"
@@ -335,7 +343,8 @@ export default function AddVehicleScreen() {
             />
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
-    </ScreenContainer>
+        </KeyboardAvoidingView>
+      </ScreenContainer>
+    </>
   );
 }

@@ -1,27 +1,21 @@
 // components/vehicles/vehicleCard.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../theme/themeProvider';
-import { VehicleItem, deleteVehicle } from '../../services/vehiclesService';
+import { VehicleItem } from '../../services/vehiclesService';
 
-type VehicleCardProps = { vehicle: VehicleItem; onDelete?: () => void };
+type VehicleCardProps = { 
+  vehicle: VehicleItem; 
+  onPress?: () => void;
+};
 
-export default function VehicleCard({ vehicle, onDelete }: VehicleCardProps) {
+export default function VehicleCard({ vehicle, onPress }: VehicleCardProps) {
   const { colors, spacing } = useTheme();
 
-  const handleDelete = async () => {
-    try {
-      await deleteVehicle(vehicle.id); // Appelle la fonction centralisée
-      Alert.alert('Succès', 'Véhicule supprimé avec succès.');
-      if (onDelete) onDelete(); // Appelle une fonction de rappel pour mettre à jour la liste
-    } catch (e) {
-      console.error('Erreur lors de la suppression du véhicule :', e);
-      Alert.alert('Erreur', 'Une erreur est survenue lors de la suppression.');
-    }
-  };
-
   return (
-    <View
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={!onPress}
       style={{
         backgroundColor: colors.surface,
         borderWidth: 1,
@@ -43,33 +37,9 @@ export default function VehicleCard({ vehicle, onDelete }: VehicleCardProps) {
       <Text style={{ color: colors.muted }}>
         {vehicle.engineSize ? `Cylindrée: ${vehicle.engineSize} cc` : ''}
         {vehicle.numberOfCylinders ? ` · Cylindres: ${vehicle.numberOfCylinders}` : ''}
-        {vehicle.fuelType ? ` · Carburant: ${vehicle.fuelType}` : ''}
-        {vehicle.type ? ` · Type: ${vehicle.type}` : ''}
+        {vehicle.fuel?.name ? ` · Carburant: ${vehicle.fuel.name}` : ''}
+        {vehicle.vehicleType?.name ? ` · Type: ${vehicle.vehicleType.name}` : ''}
       </Text>
-
-      {/* Bouton de suppression */}
-      <TouchableOpacity
-        onPress={() => {
-          Alert.alert(
-            'Confirmation',
-            'Êtes-vous sûr de vouloir supprimer ce véhicule ?',
-            [
-              { text: 'Annuler', style: 'cancel' },
-              { text: 'Supprimer', style: 'destructive', onPress: handleDelete },
-            ]
-          );
-        }}
-        style={{
-          marginTop: spacing(2),
-          backgroundColor: colors.danger,
-          paddingVertical: spacing(1),
-          paddingHorizontal: spacing(2),
-          borderRadius: 8,
-          alignItems: 'center',
-        }}
-      >
-        <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Supprimer</Text>
-      </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 }
