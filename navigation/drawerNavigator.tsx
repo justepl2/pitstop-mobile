@@ -18,6 +18,7 @@ function VehiclesStack() {
   return (
     <Stack.Navigator
       screenOptions={{
+        headerShown: false, // Ajouter cette ligne pour supprimer tous les en-têtes du stack
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.primary,
         headerTitleStyle: { fontWeight: '700' },
@@ -69,7 +70,10 @@ export default function drawerNavigator() {
       drawerContent={DrawerContent}
     >
       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
-      <Drawer.Screen name="Vehicles" component={VehiclesStack} />
+      <Drawer.Screen 
+        name="Vehicles" 
+        component={VehiclesStack}
+      />
       <Drawer.Screen name="Maintenances" component={MaintenancesScreen} />
     </Drawer.Navigator>
   );

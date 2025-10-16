@@ -10,10 +10,17 @@ export type VehicleItem = {
   kilometers: number;
   registration?: string | null;
   engineSize?: number | null;
-  type?: string | null;
-  fuelType?: string | null;
+  vehicleType?: {
+    id: number;
+    name: string;
+  } | null;
+  fuel?: {
+    id: number;
+    name: string;
+  } | null;
   numberOfCylinders?: number | null;
   sell?: boolean | null;
+  motorcycleId?: number | null;
 };
 
 export async function fetchVehicles(userId: string): Promise<VehicleItem[]> {
@@ -27,10 +34,11 @@ export async function fetchVehicles(userId: string): Promise<VehicleItem[]> {
       kilometers,
       registration_number,
       engine_size,
-      type,
-      fuel_type,
       number_of_cylinders,
-      sell
+      sell,
+      motorcycle_id,
+      vehicle_type:vehicle_type(id, name),
+      fuel:fuel(id, name)
     `)
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
@@ -45,10 +53,11 @@ export async function fetchVehicles(userId: string): Promise<VehicleItem[]> {
     kilometers: Number(v.kilometers ?? 0),
     registration: v.registration_number ?? null,
     engineSize: v.engine_size ?? null,
-    type: v.type ?? null,
-    fuelType: v.fuel_type ?? null,
+    vehicleType: v.vehicle_type ? { id: v.vehicle_type.id, name: v.vehicle_type.name } : null,
+    fuel: v.fuel ? { id: v.fuel.id, name: v.fuel.name } : null,
     numberOfCylinders: v.number_of_cylinders ?? null,
     sell: v.sell ?? null,
+    motorcycleId: v.motorcycle_id ?? null,
   }));
 }
 
@@ -58,9 +67,9 @@ export type NewVehicleInput = {
   year?: number | null;
   kilometers?: number | null;
   registrationNumber?: string | null;
-  engineSize?: string | null;
-  type?: string | null;
-  fuelType?: string | null;
+  engineSize?: number | null;
+  vehicleTypeId?: number | null;
+  fuelId?: number | null;
   numberOfCylinders?: number | null;
   sell?: boolean | null;
   motorcycleId?: number | null;
@@ -75,11 +84,11 @@ export async function insertVehicle(userId: string, input: NewVehicleInput) {
     kilometers: input.kilometers ?? 0,
     registration_number: input.registrationNumber ?? null,
     engine_size: input.engineSize ?? null,
-    type: input.type ?? null,
-    fuel_type: input.fuelType ?? null,
+    vehicle_type: input.vehicleTypeId ?? null,
+    fuel: input.fuelId ?? null,
     number_of_cylinders: input.numberOfCylinders ?? null,
     sell: input.sell ?? false,
-    motorcycle_id: input.motorcycleId ?? null, // Assurez-vous que ce champ est inclus
+    motorcycle_id: input.motorcycleId ?? null,
   };
 
   const { data, error } = await supabase.from('vehicles').insert(payload).select('id').single();

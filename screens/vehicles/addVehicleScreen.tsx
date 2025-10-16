@@ -10,6 +10,8 @@ import { useNavigation } from '@react-navigation/native';
 import { insertVehicle, NewVehicleInput } from '../../services/vehiclesService';
 import { searchMotorcycleBrands, searchDisplacementsForBrand, searchModelsByBrandAndDisplacement, searchYearsByBrandModelDisplacement } from '../../services/vehiclesService';
 import { fetchMotorcycle } from '../../services/vehiclesService';
+import { fetchVehicleTypes, searchVehicleTypes, VehicleType } from '../../services/vehicleTypeService';
+import { fetchFuels, searchFuels, Fuel } from '../../services/fuelService';
 
 export default function addVehicleScreen() {
   const { colors, spacing } = useTheme();
@@ -22,8 +24,8 @@ export default function addVehicleScreen() {
     kilometers: 0,
     registrationNumber: '',
     engineSize: null,
-    type: '',
-    fuelType: '',
+    vehicleTypeId: null,
+    fuelId: null,
     numberOfCylinders: null,
     sell: false,
   });
@@ -91,6 +93,18 @@ export default function addVehicleScreen() {
   const [years, setYears] = useState<string[]>([]);
   const [showYearSuggestions, setShowYearSuggestions] = useState(false);
 
+  // Type de véhicule: recherche incrémentale
+  const [vehicleTypeQuery, setVehicleTypeQuery] = useState('');
+  const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
+  const [selectedVehicleType, setSelectedVehicleType] = useState<VehicleType | null>(null);
+  const [showVehicleTypeSuggestions, setShowVehicleTypeSuggestions] = useState(false);
+
+  // Fuel: recherche incrémentale
+  const [fuelQuery, setFuelQuery] = useState('');
+  const [fuels, setFuels] = useState<Fuel[]>([]);
+  const [selectedFuel, setSelectedFuel] = useState<Fuel | null>(null);
+  const [showFuelSuggestions, setShowFuelSuggestions] = useState(false);
+
   useEffect(() => {
     console.log('selectedBrand:', selectedBrand);
     console.log('form.engineSize:', form.engineSize);
@@ -144,11 +158,94 @@ export default function addVehicleScreen() {
     return () => clearTimeout(timeout);
   }, [selectedBrand, form.model, form.engineSize]);
 
+  // Effect pour la recherche des types de véhicules
+  useEffect(() => {
+    const fetchVehicleTypesData = async () => {
+      if (vehicleTypeQuery.trim().length === 0) {
+        setVehicleTypes([]);
+        return;
+      }
+
+      try {
+        const results = await searchVehicleTypes(vehicleTypeQuery.trim(), 20);
+        setVehicleTypes(results);
+      } catch (e) {
+        console.error('Erreur lors de la recherche des types de véhicules :', e);
+        setVehicleTypes([]);
+      }
+    };
+
+    const timeout = setTimeout(fetchVehicleTypesData, 200);
+    return () => clearTimeout(timeout);
+  }, [vehicleTypeQuery]);
+
+  // Effect pour la recherche des carburants
+  useEffect(() => {
+    const fetchFuelsData = async () => {
+      if (fuelQuery.trim().length === 0) {
+        setFuels([]);
+        return;
+      }
+
+      try {
+        const results = await searchFuels(fuelQuery.trim(), 20);
+        setFuels(results);
+      } catch (e) {
+        console.error('Erreur lors de la recherche des carburants :', e);
+        setFuels([]);
+      }
+    };
+
+    const timeout = setTimeout(fetchFuelsData, 200);
+    return () => clearTimeout(timeout);
+  }, [fuelQuery]);
+
+  // Effects pour gérer la fermeture des suggestions
+  useEffect(() => {
+    if (selectedVehicleType && vehicleTypeQuery === selectedVehicleType.name) {
+      const timeout = setTimeout(() => {
+        setShowVehicleTypeSuggestions(false);
+      }, 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [vehicleTypeQuery, selectedVehicleType]);
+
+  useEffect(() => {
+    if (selectedFuel && fuelQuery === selectedFuel.name) {
+      const timeout = setTimeout(() => {
+        setShowFuelSuggestions(false);
+      }, 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [fuelQuery, selectedFuel]);
+
+  // Chargement initial des types et carburants populaires
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        // Charger les premiers types de véhicules
+        const initialVehicleTypes = await fetchVehicleTypes();
+        if (initialVehicleTypes.length > 0 && vehicleTypeQuery === '') {
+          setVehicleTypes(initialVehicleTypes.slice(0, 10));
+        }
+
+        // Charger les premiers carburants
+        const initialFuels = await fetchFuels();
+        if (initialFuels.length > 0 && fuelQuery === '') {
+          setFuels(initialFuels.slice(0, 10));
+        }
+      } catch (e) {
+        console.error('Erreur lors du chargement initial des données:', e);
+      }
+    };
+
+    loadInitialData();
+  }, []);
+
   const validate = (): string | null => {
     if (!form.brand?.trim()) return 'La marque est requise.';
     if (!form.model?.trim()) return 'Le modèle est requis.';
     if (!form.year || form.year < 1900 || form.year > 2100) return 'Année invalide.';
-    if (!form.engineSize?.trim()) return 'La cylindrée est requise.';
     if (form.kilometers != null && form.kilometers < 0) return 'Le kilométrage doit être positif.';
     return null;
   };
@@ -168,7 +265,7 @@ export default function addVehicleScreen() {
       // Requête pour vérifier si le véhicule existe dans la table `motorcycles`
       let motorcycleId: number | null = null;
       try {
-        const motorcycle = await fetchMotorcycle(brand, model, year!, engineSize!);
+        const motorcycle = await fetchMotorcycle(brand, model, year!, engineSize!.toString());
         motorcycleId = motorcycle?.id ?? null; // Récupère l'ID de la `motorcycle`
       } catch (e) {
         console.error('Erreur lors de la vérification du véhicule dans motorcycles:', e);
@@ -191,9 +288,9 @@ export default function addVehicleScreen() {
         kilometers,
         registrationNumber,
         engineSize,
-        type: 'motorcycle',
-        fuelType: 'essence',
         sell: false,
+        vehicleTypeId: form.vehicleTypeId,
+        fuelId: form.fuelId,
         motorcycleId, // Ajout de l'ID de la `motorcycle`
       };
   
@@ -222,8 +319,65 @@ export default function addVehicleScreen() {
         >
           <Text style={{ fontSize: 22, fontWeight: '700', color: colors.text }}>Ajouter un véhicule</Text>
           <Text style={{ marginTop: spacing(1), color: colors.muted }}>
-            Sélectionnez la marque et la cylindrée via recherche, puis complétez les informations.
+            Sélectionnez le type, la marque et la cylindrée via recherche, puis complétez les informations.
           </Text>
+
+          {/* Type de véhicule avec recherche incrémentale */}
+          <View style={{ marginTop: spacing(2) }}>
+            <Text style={{ color: colors.text, fontWeight: '700' }}>Type de véhicule</Text>
+            <TextInput
+              value={vehicleTypeQuery}
+              onChangeText={(t) => {
+                setVehicleTypeQuery(t);
+                setSelectedVehicleType(null);
+                setShowVehicleTypeSuggestions(true);
+              }}
+              onFocus={() => setShowVehicleTypeSuggestions(true)}
+              placeholder="Ex: Moto, Scooter..."
+              placeholderTextColor="#9AA0A6"
+              autoCapitalize="none"
+              autoComplete='off'
+              autoCorrect={false}
+              style={{
+                marginTop: spacing(1),
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 10,
+                paddingHorizontal: 12,
+                paddingVertical: 12,
+                backgroundColor: colors.surface,
+                color: colors.text,
+              }}
+            />
+            {showVehicleTypeSuggestions && vehicleTypes.length > 0 && (
+              <FlatList
+                data={vehicleTypes}
+                keyExtractor={(item) => item.id.toString()}
+                keyboardShouldPersistTaps="handled"
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedVehicleType(item);
+                      setVehicleTypeQuery(item.name);
+                      update({ vehicleTypeId: item.id });
+                      setShowVehicleTypeSuggestions(false);
+                    }}
+                    style={{ paddingVertical: spacing(1) }}
+                  >
+                    <Text style={{ color: colors.text, fontWeight: '700' }}>{item.name}</Text>
+                  </TouchableOpacity>
+                )}
+                style={{
+                  marginTop: spacing(1),
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  borderRadius: 10,
+                  backgroundColor: colors.surface,
+                  maxHeight: 240,
+                }}
+              />
+            )}
+          </View>
 
           {/* Marque avec recherche incrémentale */}
           <View style={{ marginTop: spacing(2) }}>
@@ -281,7 +435,7 @@ export default function addVehicleScreen() {
             <Text style={{ color: colors.text, fontWeight: '700' }}>Cylindrée (cc)</Text>
             <TextInput
               value={form.engineSize?.toString() ?? ''}
-              onChangeText={(t) => update({ engineSize: t })}
+              onChangeText={(t) => update({ engineSize: t ? Number(t) : null })}
               placeholder="Ex: 700"
               placeholderTextColor="#9AA0A6"
               keyboardType="numeric"
@@ -393,6 +547,63 @@ export default function addVehicleScreen() {
                     style={{ paddingVertical: spacing(1) }}
                   >
                     <Text style={{ color: colors.text, fontWeight: '700' }}>{item}</Text> {/* Affichez directement `item` */}
+                  </TouchableOpacity>
+                )}
+                style={{
+                  marginTop: spacing(1),
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  borderRadius: 10,
+                  backgroundColor: colors.surface,
+                  maxHeight: 240,
+                }}
+              />
+            )}
+          </View>
+
+          {/* Fuel avec recherche incrémentale */}
+          <View style={{ marginTop: spacing(2) }}>
+            <Text style={{ color: colors.text, fontWeight: '700' }}>Carburant</Text>
+            <TextInput
+              value={fuelQuery}
+              onChangeText={(t) => {
+                setFuelQuery(t);
+                setSelectedFuel(null);
+                setShowFuelSuggestions(true);
+              }}
+              onFocus={() => setShowFuelSuggestions(true)}
+              placeholder="Ex: Essence, Diesel, Électrique..."
+              placeholderTextColor="#9AA0A6"
+              autoCapitalize="none"
+              autoComplete='off'
+              autoCorrect={false}
+              style={{
+                marginTop: spacing(1),
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 10,
+                paddingHorizontal: 12,
+                paddingVertical: 12,
+                backgroundColor: colors.surface,
+                color: colors.text,
+              }}
+            />
+            {showFuelSuggestions && fuels.length > 0 && (
+              <FlatList
+                data={fuels}
+                keyExtractor={(item) => item.id.toString()}
+                keyboardShouldPersistTaps="handled"
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedFuel(item);
+                      setFuelQuery(item.name);
+                      update({ fuelId: item.id });
+                      setShowFuelSuggestions(false);
+                    }}
+                    style={{ paddingVertical: spacing(1) }}
+                  >
+                    <Text style={{ color: colors.text, fontWeight: '700' }}>{item.name}</Text>
                   </TouchableOpacity>
                 )}
                 style={{
