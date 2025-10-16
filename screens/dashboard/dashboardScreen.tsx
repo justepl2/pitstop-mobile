@@ -7,9 +7,11 @@ import StatsCard from '../../components/ui/statsCard';
 import SectionHeader from '../../components/ui/sectionHeader';
 import { supabase } from '../../lib/supabase';
 import { fetchDashboardStats, fetchRecentMaintenances, type MaintenanceItem } from '../../services/dashboardService';
+import { useNavigation } from '@react-navigation/native';
 
 export default function dashboardScreen() {
   const { colors, spacing } = useTheme();
+  const navigation = useNavigation();
 
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ vehicles: 0, recentMaintenances: 0 });
@@ -60,7 +62,14 @@ export default function dashboardScreen() {
 
       {/* Cartes de stats */}
       <View style={{ flexDirection: 'row', gap: spacing(2), marginTop: spacing(2) }}>
-        <StatsCard title="Véhicules" value={`${stats.vehicles}`} />
+        <StatsCard 
+          title="Véhicules" 
+          value={`${stats.vehicles}`} 
+          onPress={() => {
+            // @ts-ignore
+            navigation.navigate('Vehicles');
+          }}
+        />
         <StatsCard title="Entretiens ce mois" value={`${stats.recentMaintenances}`} />
       </View>
 
