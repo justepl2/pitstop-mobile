@@ -12,7 +12,7 @@ import { fetchVehicles, type VehicleItem } from '../../services/vehiclesService'
 import { useAuth } from '../../hooks/useAuth';
 
 export default function VehiclesScreen() {
-  const { spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const navigation = useNavigation();
   const { getCurrentUserId } = useAuth();
   
@@ -50,29 +50,39 @@ export default function VehiclesScreen() {
   }
 
   return (
-    <ScreenContainer>
-      <ScreenHeader
-        title="Vos véhicules"
-        action={
-          <Button
-            title="Ajouter"
-            onPress={() => {
-              // @ts-ignore
-              navigation.navigate('AddVehicle');
-            }}
-            size="small"
-          />
-        }
-      />
-
-      <FlatList
+    <>
+      <View style={{ 
+        backgroundColor: colors.background, 
+        paddingTop: spacing(2),
+        paddingHorizontal: spacing(2)
+      }}>
+        <ScreenHeader
+          title="Vos véhicules"
+          action={
+            <Button
+              title="Ajouter"
+              onPress={() => {
+                // @ts-ignore
+                navigation.navigate('AddVehicle');
+              }}
+              size="small"
+            />
+          }
+        />
+      </View>
+      
+      <ScreenContainer padding={false} edges={['bottom', 'left', 'right']}>
+        <FlatList
         data={vehicles || []}
         keyExtractor={(item) => item.id}
         ItemSeparatorComponent={() => <View style={{ height: spacing(2) }} />}
         renderItem={({ item }) => (
           <VehicleCard
             vehicle={item}
-            onDelete={loadVehicles} // Recharge la liste après suppression
+            onPress={() => {
+              // @ts-ignore
+              navigation.navigate('VehicleDetails', { vehicleId: item.id });
+            }}
           />
         )}
         ListEmptyComponent={
@@ -92,8 +102,9 @@ export default function VehiclesScreen() {
             onRefresh={handleRefresh}
           />
         }
-        contentContainerStyle={{ paddingBottom: spacing(4) }}
+        contentContainerStyle={{ paddingBottom: spacing(4), padding: spacing(2), paddingTop: spacing(1) }}
       />
-    </ScreenContainer>
+      </ScreenContainer>
+    </>
   );
 }

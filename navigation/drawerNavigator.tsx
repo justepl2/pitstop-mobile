@@ -8,6 +8,7 @@ import DashboardScreen from '../screens/dashboard/dashboardScreen';
 import MaintenancesScreen from '../screens/maintenances/maintenancesScreen';
 import VehiclesScreen from '../screens/vehicles/vehiclesScreen';
 import AddVehicleScreen from '../screens/vehicles/addVehicleScreen';
+import VehicleDetailsScreen from '../screens/vehicles/vehicleDetailsScreen';
 import { createStackNavigator } from '@react-navigation/stack';
 
 const Drawer = createDrawerNavigator();
@@ -26,6 +27,7 @@ function VehiclesStack() {
     >
       <Stack.Screen name="VehiclesHome" component={VehiclesScreen} options={{ title: 'Véhicules' }} />
       <Stack.Screen name="AddVehicle" component={AddVehicleScreen} options={{ title: 'Ajouter un véhicule' }} />
+      <Stack.Screen name="VehicleDetails" component={VehicleDetailsScreen} options={{ title: 'Détails du véhicule' }} />
     </Stack.Navigator>
   );
 }

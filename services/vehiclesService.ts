@@ -23,6 +23,57 @@ export type VehicleItem = {
   motorcycleId?: number | null;
 };
 
+export async function fetchVehicleById(vehicleId: string, userId: string): Promise<VehicleItem> {
+  const { data, error } = await supabase
+    .from('vehicles')
+    .select(`
+      id,
+      brand,
+      model,
+      year,
+      kilometers,
+      registration_number,
+      engine_size,
+      number_of_cylinders,
+      sell,
+      motorcycle_id,
+      vehicle_type:vehicle_type(id, name),
+      fuel:fuel(id, name)
+    `)
+    .eq('id', vehicleId)
+    .eq('user_id', userId)
+    .single();
+
+  if (error) {
+    throw new Error('Erreur lors de la récupération du véhicule : ' + error.message);
+  }
+
+  if (!data) {
+    throw new Error('Véhicule non trouvé');
+  }
+
+  return {
+    id: data.id,
+    brand: data.brand,
+    model: data.model,
+    year: data.year,
+    kilometers: data.kilometers,
+    registration: data.registration_number,
+    engineSize: data.engine_size,
+    numberOfCylinders: data.number_of_cylinders,
+    sell: data.sell,
+    motorcycleId: data.motorcycle_id,
+    vehicleType: data.vehicle_type ? {
+      id: data.vehicle_type.id,
+      name: data.vehicle_type.name
+    } : null,
+    fuel: data.fuel ? {
+      id: data.fuel.id,
+      name: data.fuel.name
+    } : null,
+  };
+}
+
 export async function fetchVehicles(userId: string): Promise<VehicleItem[]> {
   const { data, error } = await supabase
     .from('vehicles')
