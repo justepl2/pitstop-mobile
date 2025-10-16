@@ -1,108 +1,99 @@
-// screens/vehicles/vehiclesScreen.tsx
-// AJOUT: navigation vers l’écran d’ajout sur le bouton “Ajouter”
-import React, { useState, useCallback } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, FlatList, RefreshControl, Alert } from 'react-native';
 import { useTheme } from '../../theme/themeProvider';
-import { supabase } from '../../lib/supabase';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import ScreenContainer from '../../components/ui/ScreenContainer';
+import ScreenHeader from '../../components/ui/ScreenHeader';
+import LoadingScreen from '../../components/ui/LoadingScreen';
+import Button from '../../components/ui/Button';
+import EmptyState from '../../components/ui/EmptyState';
 import VehicleCard from '../../components/vehicles/vehicleCard';
 import { fetchVehicles, type VehicleItem } from '../../services/vehiclesService';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { reportSupabaseError } from '../../utils/errorHandler';
+import { useAuth } from '../../hooks/useAuth';
 
-export default function vehiclesScreen() {
-  const { colors, spacing } = useTheme();
-  const nav = useNavigation();
-
+export default function VehiclesScreen() {
+  const { spacing } = useTheme();
+  const navigation = useNavigation();
+  const { getCurrentUserId } = useAuth();
+  
+  const [vehicles, setVehicles] = useState<VehicleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [vehicles, setVehicles] = useState<VehicleItem[]>([]);
 
-  const load = useCallback(async () => {
+  const loadVehicles = useCallback(async () => {
     try {
-      setLoading(true);
-      const { data: sessionRes, error: sessionErr } = await supabase.auth.getSession();
-      if (sessionErr) throw sessionErr;
-      const userId = sessionRes.session?.user.id;
-      if (!userId) throw new Error('Session manquante.');
-      const items = await fetchVehicles(userId);
-      setVehicles(items);
-    } catch (e: any) {
-      setVehicles([]);
-      reportSupabaseError('Erreur de chargement des véhicules', e);
+      const userId = await getCurrentUserId();
+      const data = await fetchVehicles(userId);
+      setVehicles(data);
+    } catch (error: any) {
+      Alert.alert('Erreur de chargement des véhicules', error.message);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, []);
+  }, [getCurrentUserId]);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadVehicles();
+  }, [loadVehicles]);
 
   useFocusEffect(
     useCallback(() => {
-      let active = true;
-      (async () => {
-        if (active) await load();
-      })();
-      return () => {
-        active = false;
-      };
-    }, [load])
+      setLoading(true);
+      loadVehicles();
+    }, [loadVehicles])
   );
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await load();
-    } finally {
-      setRefreshing(false);
-    }
-  }, [load]);
-
   if (loading) {
-    return (
-      <SafeAreaView
-        style={{ flex: 1, backgroundColor: colors.background, padding: spacing(2), alignItems: 'center', justifyContent: 'center' }}
-        edges={['top', 'left', 'right']}
-      >
-        <ActivityIndicator color={colors.primary} size="large" />
-        <Text style={{ marginTop: spacing(1), color: colors.muted }}>Chargement des véhicules…</Text>
-      </SafeAreaView>
-    );
+    return <LoadingScreen message="Chargement des véhicules…" />;
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background, padding: spacing(2) }} edges={['top', 'left', 'right']}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing(2) }}>
-        <Text style={{ fontSize: 22, fontWeight: '700', color: colors.text }}>Vos véhicules</Text>
-        <TouchableOpacity
-          onPress={() => {
-            // @ts-ignore
-            nav.navigate('AddVehicle');
-          }}
-          style={{ backgroundColor: colors.primary, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10 }}
-        >
-          <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Ajouter</Text>
-        </TouchableOpacity>
-      </View>
+    <ScreenContainer>
+      <ScreenHeader
+        title="Vos véhicules"
+        action={
+          <Button
+            title="Ajouter"
+            onPress={() => {
+              // @ts-ignore
+              navigation.navigate('AddVehicle');
+            }}
+            size="small"
+          />
+        }
+      />
 
       <FlatList
-        data={vehicles}
+        data={vehicles || []}
         keyExtractor={(item) => item.id}
         ItemSeparatorComponent={() => <View style={{ height: spacing(2) }} />}
         renderItem={({ item }) => (
           <VehicleCard
             vehicle={item}
-            onDelete={async () => {
-              await load(); // Recharge la liste des véhicules après suppression
-            }}
+            onDelete={loadVehicles} // Recharge la liste après suppression
           />
         )}
         ListEmptyComponent={
-          <View style={{ paddingVertical: spacing(2) }}>
-            <Text style={{ color: colors.muted }}>Aucun véhicule enregistré.</Text>
-          </View>
+          <EmptyState
+            title="Aucun véhicule"
+            message="Vous n'avez pas encore ajouté de véhicule."
+            actionTitle="Ajouter un véhicule"
+            onAction={() => {
+              // @ts-ignore
+              navigation.navigate('AddVehicle');
+            }}
+          />
         }
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+          />
+        }
         contentContainerStyle={{ paddingBottom: spacing(4) }}
       />
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }

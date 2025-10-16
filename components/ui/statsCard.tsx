@@ -14,9 +14,8 @@ export default function StatsCard({ title, value, onPress }: StatsCardProps) {
 
   return (
     <TouchableOpacity
-      onPress={onPress} // Ajout de la gestion du clic
+      onPress={onPress}
       style={{
-        flex: 1,
         backgroundColor: colors.surface,
         borderRadius: 12,
         padding: spacing(2),
@@ -24,6 +23,7 @@ export default function StatsCard({ title, value, onPress }: StatsCardProps) {
         justifyContent: 'center',
         borderWidth: 1,
         borderColor: colors.border,
+        minHeight: 80,
       }}
     >
       <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{title}</Text>
