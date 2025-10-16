@@ -24,8 +24,9 @@ export default function app() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  if (!checked) return null;
-
+  if (!checked) {
+    return null;
+  }
   return (
     <ThemeProvider>
       <StatusBar barStyle="dark-content" />
