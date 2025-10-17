@@ -13,6 +13,7 @@ export type VehicleItem = {
   vehicleType?: {
     id: number;
     name: string;
+    age_calculation?: string[];
   } | null;
   fuel?: {
     id: number;
@@ -37,8 +38,10 @@ export async function fetchVehicleById(vehicleId: string, userId: string): Promi
       number_of_cylinders,
       sell,
       motorcycle_id,
-      vehicle_type:vehicle_type(id, name),
-      fuel:fuel(id, name)
+      vehicle_type_id:vehicle_type,
+      fuel_id:fuel,
+      vehicle_type_data:vehicle_type(id, name, age_calculation),
+      fuel_data:fuel(id, name)
     `)
     .eq('id', vehicleId)
     .eq('user_id', userId)
@@ -52,6 +55,7 @@ export async function fetchVehicleById(vehicleId: string, userId: string): Promi
     throw new Error('Véhicule non trouvé');
   }
 
+
   return {
     id: data.id,
     brand: data.brand,
@@ -63,13 +67,14 @@ export async function fetchVehicleById(vehicleId: string, userId: string): Promi
     numberOfCylinders: data.number_of_cylinders,
     sell: data.sell,
     motorcycleId: data.motorcycle_id,
-    vehicleType: data.vehicle_type ? {
-      id: data.vehicle_type.id,
-      name: data.vehicle_type.name
+    vehicleType: data.vehicle_type_data ? {
+      id: data.vehicle_type_data.id,
+      name: data.vehicle_type_data.name,
+      age_calculation: data.vehicle_type_data.age_calculation
     } : null,
-    fuel: data.fuel ? {
-      id: data.fuel.id,
-      name: data.fuel.name
+    fuel: data.fuel_data ? {
+      id: data.fuel_data.id,
+      name: data.fuel_data.name
     } : null,
   };
 }
@@ -88,8 +93,10 @@ export async function fetchVehicles(userId: string): Promise<VehicleItem[]> {
       number_of_cylinders,
       sell,
       motorcycle_id,
-      vehicle_type:vehicle_type(id, name),
-      fuel:fuel(id, name)
+      vehicle_type_id:vehicle_type,
+      fuel_id:fuel,
+      vehicle_type_data:vehicle_type(id, name, age_calculation),
+      fuel_data:fuel(id, name)
     `)
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
@@ -104,8 +111,8 @@ export async function fetchVehicles(userId: string): Promise<VehicleItem[]> {
     kilometers: Number(v.kilometers ?? 0),
     registration: v.registration_number ?? null,
     engineSize: v.engine_size ?? null,
-    vehicleType: v.vehicle_type ? { id: v.vehicle_type.id, name: v.vehicle_type.name } : null,
-    fuel: v.fuel ? { id: v.fuel.id, name: v.fuel.name } : null,
+    vehicleType: v.vehicle_type_data ? { id: v.vehicle_type_data.id, name: v.vehicle_type_data.name, age_calculation: v.vehicle_type_data.age_calculation } : null,
+    fuel: v.fuel_data ? { id: v.fuel_data.id, name: v.fuel_data.name } : null,
     numberOfCylinders: v.number_of_cylinders ?? null,
     sell: v.sell ?? null,
     motorcycleId: v.motorcycle_id ?? null,

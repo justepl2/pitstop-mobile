@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Alert } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../theme/themeProvider';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import ScreenContainer from '../../components/ui/ScreenContainer';
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import LoadingScreen from '../../components/ui/LoadingScreen';
 import { VehicleItem, fetchVehicleById, deleteVehicle } from '../../services/vehiclesService';
 import { MotorcycleItem, fetchMotorcycleById } from '../../services/motorcycleService';
+import { MaintenanceItem, fetchMaintenancesByVehicle } from '../../services/maintenanceService';
+import { MaintenanceHistoryItem, fetchMaintenanceHistoriesByVehicle } from '../../services/maintenanceHistoryService';
 import Button from '../../components/ui/Button';
+import KilometerChart from '../../components/ui/KilometerChart';
 import { useAuth } from '../../hooks/useAuth';
 
 type VehicleDetailsRouteProp = RouteProp<{
@@ -22,7 +25,11 @@ export default function VehicleDetailsScreen() {
   
   const [vehicle, setVehicle] = useState<VehicleItem | null>(null);
   const [motorcycle, setMotorcycle] = useState<MotorcycleItem | null>(null);
+  const [maintenances, setMaintenances] = useState<MaintenanceItem[]>([]);
+  const [kmHistory, setKmHistory] = useState<MaintenanceHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMaintenances, setLoadingMaintenances] = useState(false);
+  const [loadingKmHistory, setLoadingKmHistory] = useState(false);
 
   const { vehicleId } = route.params;
 
@@ -53,6 +60,49 @@ export default function VehicleDetailsScreen() {
 
     loadVehicle();
   }, [vehicleId]);
+
+  // Charger les maintenances du véhicule
+  const loadMaintenances = useCallback(async () => {
+    if (!vehicle) return;
+
+    setLoadingMaintenances(true);
+    try {
+      const userId = await getCurrentUserId();
+      const maintenancesData = await fetchMaintenancesByVehicle(vehicle.id, userId);
+      setMaintenances(maintenancesData);
+    } catch (error: any) {
+      console.warn('Erreur lors du chargement des maintenances:', error);
+      // On continue même si les maintenances ne se chargent pas
+    } finally {
+      setLoadingMaintenances(false);
+    }
+  }, [vehicle, getCurrentUserId]);
+
+  const loadKmHistory = useCallback(async () => {
+    if (!vehicle) return;
+
+    console.log('🔄 Rechargement de l\'historique kilométrique pour le véhicule:', vehicle.id);
+    setLoadingKmHistory(true);
+    try {
+      const historyData = await fetchMaintenanceHistoriesByVehicle(vehicle.id);
+      setKmHistory(historyData);
+      console.log('✅ Historique kilométrique rechargé:', historyData.length, 'entrées');
+    } catch (error: any) {
+      console.warn('Erreur lors du chargement de l\'historique kilométrique:', error);
+      // On continue même si l'historique ne se charge pas
+    } finally {
+      setLoadingKmHistory(false);
+    }
+  }, [vehicle]);
+
+  // Recharger les données quand on revient sur l'écran (après création d'une maintenance ou historique)
+  useFocusEffect(
+    useCallback(() => {
+      console.log('🔃 VehicleDetailsScreen - useFocusEffect déclenché, rechargement des données...');
+      loadMaintenances();
+      loadKmHistory();
+    }, [loadMaintenances, loadKmHistory])
+  );
 
   const handleDelete = async () => {
     if (!vehicle) return;
@@ -120,6 +170,104 @@ export default function VehicleDetailsScreen() {
           showsVerticalScrollIndicator={false} 
           contentContainerStyle={{ paddingBottom: spacing(4), padding: spacing(2), paddingTop: spacing(1) }}
         >
+        {/* Actions et maintenances */}
+        {/* Graphique kilométrique */}
+        {!loadingKmHistory && <KilometerChart data={kmHistory} />}
+
+        <View style={{
+          backgroundColor: colors.surface,
+          borderRadius: 12,
+          padding: spacing(2),
+          marginBottom: spacing(2),
+          borderWidth: 1,
+          borderColor: colors.border,
+        }}>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: spacing(2) }}>
+            Maintenances
+          </Text>
+
+          <View style={{ marginBottom: spacing(2), gap: spacing(1) }}>
+            <Button
+              title="+ Nouvelle maintenance"
+              onPress={() => (navigation as any).navigate('AddMaintenance', { 
+                vehicle: vehicle
+              })}
+              variant="secondary"
+            />
+            
+            <Button
+              title="📅 Historique global"
+              onPress={() => (navigation as any).navigate('AddMaintenanceHistory', { 
+                vehicle: vehicle,
+                multipleMode: true
+              })}
+              variant="ghost"
+            />
+          </View>
+
+          {/* Liste des maintenances */}
+          {loadingMaintenances ? (
+            <Text style={{ color: colors.muted, textAlign: 'center', marginVertical: spacing(2) }}>
+              Chargement des maintenances...
+            </Text>
+          ) : maintenances.length > 0 ? (
+            <View style={{ gap: spacing(1) }}>
+              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600', marginBottom: spacing(1) }}>
+                Maintenances prévues ({maintenances.length})
+              </Text>
+              {maintenances.map((maintenance) => (
+                <TouchableOpacity
+                  key={maintenance.id}
+                  onPress={() => (navigation as any).navigate('MaintenanceDetail', { 
+                    maintenanceId: maintenance.id, 
+                    vehicleName: `${vehicle.brand} ${vehicle.model}`,
+                    vehicle: vehicle
+                  })}
+                  style={{
+                    backgroundColor: colors.background,
+                    borderRadius: 8,
+                    padding: spacing(2),
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                  }}
+                >
+                  <Text style={{ 
+                    color: colors.text, 
+                    fontWeight: '600', 
+                    marginBottom: maintenance.intervalKm || maintenance.intervalMonth || maintenance.intervalHours ? spacing(0.5) : 0
+                  }}>
+                    {maintenance.name}
+                  </Text>
+                  
+                  {(maintenance.intervalKm || maintenance.intervalMonth || maintenance.intervalHours) && (
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}>
+                      {maintenance.intervalKm && (
+                        <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '500' }}>
+                          📏 {maintenance.intervalKm.toLocaleString()} km
+                        </Text>
+                      )}
+                      {maintenance.intervalMonth && (
+                        <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '500' }}>
+                          📅 {maintenance.intervalMonth} mois
+                        </Text>
+                      )}
+                      {maintenance.intervalHours && (
+                        <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '500' }}>
+                          ⏱️ {maintenance.intervalHours}h
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <Text style={{ color: colors.muted, fontSize: 14, textAlign: 'center', fontStyle: 'italic' }}>
+              Aucune maintenance programmée
+            </Text>
+          )}
+        </View>
+
         {/* Informations générales */}
         <View style={{
           backgroundColor: colors.surface,
@@ -180,12 +328,12 @@ export default function VehicleDetailsScreen() {
             </Text>
 
             {/* Moteur et Performance */}
-            {(motorcycle.displacement || motorcycle.power || motorcycle.torque || motorcycle.engineType || motorcycle.engineStroke) && (
+            {(motorcycle.roundedDisplacement || motorcycle.power || motorcycle.torque || motorcycle.engineType || motorcycle.engineStroke) && (
               <>
                 <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text, marginTop: spacing(1), marginBottom: spacing(1) }}>
                   Moteur et Performance
                 </Text>
-                {motorcycle.displacement && <InfoRow label="Cylindrée" value={`${motorcycle.displacement} cc`} colors={colors} spacing={spacing} />}
+                {motorcycle.roundedDisplacement && <InfoRow label="Cylindrée" value={`${motorcycle.roundedDisplacement} cc`} colors={colors} spacing={spacing} />}
                 {motorcycle.power && <InfoRow label="Puissance" value={`${motorcycle.power} ch`} colors={colors} spacing={spacing} />}
                 {motorcycle.torque && <InfoRow label="Couple" value={`${motorcycle.torque} Nm`} colors={colors} spacing={spacing} />}
                 {motorcycle.engineType && <InfoRow label="Type moteur" value={motorcycle.engineType} colors={colors} spacing={spacing} />}

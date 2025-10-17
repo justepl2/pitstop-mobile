@@ -7,7 +7,7 @@ export type MotorcycleItem = {
   model: string | null;
   year: number | null;
   category: string | null;
-  displacement: number | null;
+  roundedDisplacement: number | null;
   power: number | null;
   torque: number | null;
   engineType: string | null;
@@ -32,7 +32,7 @@ export async function fetchMotorcycleById(motorcycleId: number): Promise<Motorcy
       model,
       year,
       category,
-      displacement,
+      rounded_displacement,
       power,
       torque,
       engine_type,
@@ -68,7 +68,7 @@ export async function fetchMotorcycleById(motorcycleId: number): Promise<Motorcy
     model: data.model,
     year: data.year,
     category: data.category,
-    displacement: data.displacement,
+    roundedDisplacement: data.rounded_displacement,
     power: data.power,
     torque: data.torque,
     engineType: data.engine_type,
@@ -94,7 +94,7 @@ export async function fetchMotorcycles(): Promise<MotorcycleItem[]> {
       model,
       year,
       category,
-      displacement,
+      rounded_displacement,
       power,
       torque,
       engine_type,
@@ -122,7 +122,7 @@ export async function fetchMotorcycles(): Promise<MotorcycleItem[]> {
     model: motorcycle.model,
     year: motorcycle.year,
     category: motorcycle.category,
-    displacement: motorcycle.displacement,
+    roundedDisplacement: motorcycle.rounded_displacement,
     power: motorcycle.power,
     torque: motorcycle.torque,
     engineType: motorcycle.engine_type,
@@ -152,7 +152,7 @@ export async function searchMotorcycles(query: string): Promise<MotorcycleItem[]
       model,
       year,
       category,
-      displacement,
+      rounded_displacement,
       power,
       torque,
       engine_type,
@@ -182,7 +182,7 @@ export async function searchMotorcycles(query: string): Promise<MotorcycleItem[]
     model: motorcycle.model,
     year: motorcycle.year,
     category: motorcycle.category,
-    displacement: motorcycle.displacement,
+    roundedDisplacement: motorcycle.rounded_displacement,
     power: motorcycle.power,
     torque: motorcycle.torque,
     engineType: motorcycle.engine_type,
