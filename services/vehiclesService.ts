@@ -1,6 +1,7 @@
 // services/vehiclesService.ts
 // AJOUT: fonction d’insertion d’un véhicule
 import { supabase } from '../lib/supabase';
+import { logSupabaseError, logCatchError, logInfo, logSuccess, logWarning } from '../utils/supabaseLogger';
 
 export type VehicleItem = {
   id: string;
@@ -48,6 +49,10 @@ export async function fetchVehicleById(vehicleId: string, userId: string): Promi
     .single();
 
   if (error) {
+    logSupabaseError('fetchVehicleById', error, {
+      vehicleId: vehicleId,
+      userId: userId
+    });
     throw new Error('Erreur lors de la récupération du véhicule : ' + error.message);
   }
 
@@ -241,19 +246,32 @@ export async function deleteVehicle(vehicleId: string): Promise<void> {
 }
 
 export async function fetchMotorcycle(brand: string, model: string, year: number, displacement: string) {
+  console.log('🔍 Recherche moto dans vehiclesService:', { brand, model, year, displacement, type: 'rounded_displacement' });
+  
   const { data, error } = await supabase
     .from('motorcycles')
     .select('id')
     .eq('brand', brand)
     .eq('model', model)
     .eq('year', year)
-    .eq('displacement', displacement)
+    .eq('rounded_displacement', displacement) // ✅ Changé de 'displacement' à 'rounded_displacement'
     .single(); // On suppose qu'il n'y a qu'un seul résultat attendu
 
   if (error) {
-    console.error('Erreur lors de la récupération de la motorcycle :', error);
+    logSupabaseError('fetchMotorcycle', error, {
+      brand: brand,
+      model: model,
+      year: year,
+      displacement: displacement
+    });
+    
+    if (error.code === 'PGRST116') {
+      logWarning('Aucune moto trouvée avec rounded_displacement:', { brand, model, year, displacement });
+      return null;
+    }
     throw error;
   }
 
+  logSuccess('Moto trouvée avec ID:', data?.id);
   return data;
 }
