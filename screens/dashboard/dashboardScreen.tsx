@@ -133,22 +133,18 @@ export default function DashboardScreen() {
             />
           </View>
 
-          {/* Entretiens */}
+          {/* Rappels */}
           <View style={{ width: '100%', marginBottom: spacing(1) }}>
             <StatsCard
-              title="Entretiens"
-              value={stats.maintenances?.toString() || '0'}
-              subtitle="Entretiens effectués"
+              title="Rappel"
+              value={stats.reminderCount?.toString() || '0'}
+              subtitle="maintenances à prévoir"
               layout="left"
               size="lg"
               categoryIcon={{
-                family: 'Feather',
-                name: 'tool',
-                gradientColors: ['#64748b', '#334155'] // slate-500 to slate-700
-              }}
-              onPress={() => {
-                // @ts-ignore
-                navigation.navigate('MaintenancesScreen');
+                family: 'Ionicons',
+                name: 'warning-outline',
+                gradientColors: ['#f59e0b', '#ef4444'] // amber-500 to red-500
               }}
             />
           </View>
@@ -169,18 +165,22 @@ export default function DashboardScreen() {
             />
           </View>
 
-          {/* Rappels */}
-          <View style={{ width: '100%', marginBottom: spacing(1) }}>
+           {/* Entretiens */}
+           <View style={{ width: '100%', marginBottom: spacing(1) }}>
             <StatsCard
-              title="Rappel"
-              value={stats.reminderCount?.toString() || '0'}
-              subtitle="maintenances à prévoir"
+              title="Entretiens"
+              value={stats.maintenances?.toString() || '0'}
+              subtitle="Entretiens effectués"
               layout="left"
               size="lg"
               categoryIcon={{
-                family: 'Ionicons',
-                name: 'warning-outline',
-                gradientColors: ['#f59e0b', '#ef4444'] // amber-500 to red-500
+                family: 'Feather',
+                name: 'tool',
+                gradientColors: ['#64748b', '#334155'] // slate-500 to slate-700
+              }}
+              onPress={() => {
+                // @ts-ignore
+                navigation.navigate('MaintenancesScreen');
               }}
             />
           </View>
