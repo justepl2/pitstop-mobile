@@ -115,7 +115,6 @@ export default function MaintenanceDetailScreen() {
           onPress: async () => {
             try {
               await deleteMaintenanceHistory(historyId);
-              console.log('🗑️ Historique supprimé avec succès, ID:', historyId);
               
               // Recharger l'historique local après suppression
               loadMaintenanceHistory();
@@ -125,7 +124,6 @@ export default function MaintenanceDetailScreen() {
                   text: 'OK', 
                   onPress: () => {
                     // Retourner vers vehicleDetailsScreen pour déclencher le refresh
-                    console.log('📤 Navigation vers VehicleDetails pour refresh...');
                     (navigation as any).navigate('VehicleDetails', { vehicleId: vehicle.id });
                   }
                 }
