@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { logSupabaseError, logCatchError, logInfo, logSuccess, logWarning } from '../utils/supabaseLogger';
 
 // Types
 export interface MaintenanceHistoryItem {
@@ -40,7 +41,14 @@ export async function fetchMaintenanceHistoryById(historyId: number): Promise<Ma
       .single();
 
     if (error) {
-      console.error('Erreur Supabase dans fetchMaintenanceHistoryById:', error);
+      console.error('🚨 Erreur Supabase - fetchMaintenanceHistoryById:', {
+        error: error,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        historyId: historyId
+      });
       throw new Error(error.message);
     }
 
@@ -131,6 +139,81 @@ export async function fetchMaintenanceHistoriesByVehicle(vehicleId: string): Pro
     console.error('Erreur dans fetchMaintenanceHistoriesByVehicle:', error);
     throw new Error(error.message || 'Erreur lors de la récupération des historiques du véhicule');
   }
+}
+
+/**
+ * Récupère les données kilométriques groupées par date pour le graphique
+ * Un seul point par date avec la valeur km la plus récente de la journée
+ */
+export async function fetchKilometerDataForChart(vehicleId: string): Promise<MaintenanceHistoryItem[]> {
+  try {
+    // Utiliser la fonction RPC Supabase optimisée avec GROUP BY
+    const { data, error } = await supabase.rpc('get_vehicle_kilometer_chart_data', {
+      vehicle_id_param: vehicleId
+    });
+
+    if (error) {
+      console.warn('Erreur RPC get_vehicle_kilometer_chart_data, utilisation du fallback:', error.message);
+      // Fallback : utiliser l'ancienne méthode et grouper côté client
+      return await fetchMaintenanceHistoriesByVehicleGrouped(vehicleId);
+    }
+    
+    return (data || []).map((item: any) => ({
+      id: 0, // Pas d'ID spécifique pour les données groupées
+      date: item.date || undefined,
+      km: item.km || undefined,
+      maintenanceIds: undefined,
+      details: `${item.maintenance_count} maintenance${item.maintenance_count > 1 ? 's' : ''}` || undefined,
+    }));
+  } catch (error: any) {
+    console.warn('Erreur dans fetchKilometerDataForChart, utilisation du fallback:', error.message);
+    // Fallback vers l'ancienne méthode
+    return await fetchMaintenanceHistoriesByVehicleGrouped(vehicleId);
+  }
+}
+
+/**
+ * Fallback : groupe les données côté client si la fonction RPC n'existe pas
+ */
+async function fetchMaintenanceHistoriesByVehicleGrouped(vehicleId: string): Promise<MaintenanceHistoryItem[]> {
+  console.log('📊 Fallback: groupement côté client');
+  
+  const allHistories = await fetchMaintenanceHistoriesByVehicle(vehicleId);
+  
+  // Grouper par date
+  const groupedByDate = new Map<string, MaintenanceHistoryItem[]>();
+  
+  allHistories.forEach(history => {
+    if (history.date && history.km) {
+      const dateKey = history.date;
+      if (!groupedByDate.has(dateKey)) {
+        groupedByDate.set(dateKey, []);
+      }
+      groupedByDate.get(dateKey)!.push(history);
+    }
+  });
+  
+  // Prendre la valeur km la plus élevée pour chaque date (dernière maintenance de la journée)
+  const chartData: MaintenanceHistoryItem[] = [];
+  
+  groupedByDate.forEach((histories, date) => {
+    const maxKm = Math.max(...histories.map(h => h.km || 0));
+    const maintenanceCount = histories.length;
+    
+    chartData.push({
+      id: 0,
+      date,
+      km: maxKm,
+      maintenanceIds: undefined,
+      details: `${maintenanceCount} maintenance${maintenanceCount > 1 ? 's' : ''}`,
+    });
+  });
+  
+  // Trier par date
+  chartData.sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime());
+  
+  console.log('✅ Données groupées côté client:', chartData.length, 'points');
+  return chartData;
 }
 
 /**
@@ -309,5 +392,52 @@ export async function searchMaintenanceHistories(query: string, limit = 20): Pro
   } catch (error: any) {
     console.error('Erreur dans searchMaintenanceHistories:', error);
     throw new Error(error.message || 'Erreur lors de la recherche dans les historiques de maintenance');
+  }
+}
+
+/**
+ * Récupère la dernière maintenance history pour un type de maintenance donné sur un véhicule
+ */
+export async function getLastMaintenanceHistoryForType(vehicleId: string, maintenanceId: number): Promise<MaintenanceHistoryItem | null> {
+  try {
+    console.log('🔍 Récupération dernière maintenance history pour:', { vehicleId, maintenanceId });
+    
+    const { data, error } = await supabase
+      .from('maintenance_histrory')
+      .select('*')
+      .eq('maintenance_ids', maintenanceId)
+      .order('date', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error) {
+      logSupabaseError('getLastMaintenanceHistoryForType', error, {
+        vehicleId: vehicleId,
+        maintenanceId: maintenanceId
+      });
+      
+      if (error.code === 'PGRST116') {
+        // Aucun résultat trouvé - c'est normal
+        logInfo('Aucune maintenance history trouvée pour ce type');
+        return null;
+      }
+      throw error;
+    }
+
+    logSuccess('Dernière maintenance history trouvée:', data);
+    return {
+      id: data.id,
+      date: data.date || undefined,
+      km: data.km || undefined,
+      maintenanceIds: data.maintenance_ids || undefined,
+      details: data.details || undefined,
+    };
+  } catch (error: any) {
+    logCatchError('getLastMaintenanceHistoryForType', error, {
+      vehicleId: vehicleId,
+      maintenanceId: maintenanceId
+    });
+    // Ne pas throw d'erreur car c'est normal de ne pas avoir d'historique
+    return null;
   }
 }
