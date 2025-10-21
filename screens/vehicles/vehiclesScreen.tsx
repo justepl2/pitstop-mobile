@@ -26,6 +26,7 @@ export default function VehiclesScreen() {
       const data = await fetchVehicles(userId);
       setVehicles(data);
     } catch (error: any) {
+      console.error('❌ ERROR loading vehicles:', error);
       Alert.alert('Erreur de chargement des véhicules', error.message);
     } finally {
       setLoading(false);

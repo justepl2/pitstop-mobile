@@ -9,6 +9,10 @@ import MaintenancesScreen from '../screens/maintenances/maintenancesScreen';
 import VehiclesScreen from '../screens/vehicles/vehiclesScreen';
 import AddVehicleScreen from '../screens/vehicles/addVehicleScreen';
 import VehicleDetailsScreen from '../screens/vehicles/vehicleDetailsScreen';
+import AddMaintenanceScreen from '../screens/vehicles/addMaintenanceScreen';
+import MaintenanceDetailScreen from '../screens/vehicles/maintenanceDetailScreen';
+import EditMaintenanceScreen from '../screens/vehicles/editMaintenanceScreen';
+import AddMaintenanceHistoryScreen from '../screens/vehicles/addMaintenanceHistoryScreen';
 import { createStackNavigator } from '@react-navigation/stack';
 
 const Drawer = createDrawerNavigator();
@@ -28,6 +32,10 @@ function VehiclesStack() {
       <Stack.Screen name="VehiclesHome" component={VehiclesScreen} options={{ title: 'Véhicules' }} />
       <Stack.Screen name="AddVehicle" component={AddVehicleScreen} options={{ title: 'Ajouter un véhicule' }} />
       <Stack.Screen name="VehicleDetails" component={VehicleDetailsScreen} options={{ title: 'Détails du véhicule' }} />
+      <Stack.Screen name="AddMaintenance" component={AddMaintenanceScreen} options={{ title: 'Nouvelle maintenance' }} />
+      <Stack.Screen name="MaintenanceDetail" component={MaintenanceDetailScreen} options={{ title: 'Détails de la maintenance' }} />
+      <Stack.Screen name="EditMaintenance" component={EditMaintenanceScreen} options={{ title: 'Modifier la maintenance' }} />
+      <Stack.Screen name="AddMaintenanceHistory" component={AddMaintenanceHistoryScreen} options={{ title: 'Ajouter historique' }} />
     </Stack.Navigator>
   );
 }

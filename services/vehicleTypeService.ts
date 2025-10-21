@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 export type VehicleType = {
   id: number;
   name: string;
-  created_at?: string;
+  age_calculation?: string[];
 };
 
 export type NewVehicleTypeInput = {
@@ -21,7 +21,7 @@ export type UpdateVehicleTypeInput = {
 export async function fetchVehicleTypes(): Promise<VehicleType[]> {
   const { data, error } = await supabase
     .from('vehicle_type')
-    .select('*')
+    .select('id, name, age_calculation')
     .order('name', { ascending: true });
 
   if (error) {
@@ -38,7 +38,7 @@ export async function fetchVehicleTypes(): Promise<VehicleType[]> {
 export async function fetchVehicleTypeById(id: number): Promise<VehicleType | null> {
   const { data, error } = await supabase
     .from('vehicle_type')
-    .select('*')
+    .select('id, name, age_calculation')
     .eq('id', id)
     .single();
 
@@ -60,7 +60,7 @@ export async function fetchVehicleTypeById(id: number): Promise<VehicleType | nu
 export async function searchVehicleTypes(query: string, limit = 20): Promise<VehicleType[]> {
   const { data, error } = await supabase
     .from('vehicle_type')
-    .select('*')
+    .select('id, name, age_calculation')
     .ilike('name', `%${query}%`)
     .order('name', { ascending: true })
     .limit(limit);
