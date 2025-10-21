@@ -12,6 +12,14 @@ export default function KilometerChart({ data }: KilometerChartProps) {
   const { colors, spacing } = useTheme();
   const screenWidth = Dimensions.get('window').width;
 
+  // Fonction pour formater les kilomètres (65000 -> 65k)
+  const formatKm = (km: number): string => {
+    if (km >= 1000) {
+      return `${Math.round(km / 1000)}k`;
+    }
+    return km.toString();
+  };
+
   // Préparer les données pour le graphique
   const prepareChartData = () => {
     if (!data || data.length === 0) {
@@ -27,29 +35,13 @@ export default function KilometerChart({ data }: KilometerChartProps) {
       return null;
     }
 
-    // Extraire les kilomètres
-    const kilometers = validData.map(item => item.km!);
-    
-    // Créer les labels de dates (format court)
+    // Créer les labels au format mm/aa
     const labels = validData.map(item => {
       const date = new Date(item.date!);
-      return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+      return date.toLocaleDateString('fr-FR', { month: '2-digit', year: '2-digit' });
     });
 
-    // Si on a trop de points, on en prend quelques-uns
-    if (labels.length > 8) {
-      const step = Math.ceil(labels.length / 8);
-      const reducedLabels = labels.filter((_, index) => index % step === 0);
-      const reducedKilometers = kilometers.filter((_, index) => index % step === 0);
-      
-      return {
-        labels: reducedLabels,
-        datasets: [{
-          data: reducedKilometers,
-          strokeWidth: 3,
-        }]
-      };
-    }
+    const kilometers = validData.map(item => item.km!);
 
     return {
       labels,
@@ -107,7 +99,7 @@ export default function KilometerChart({ data }: KilometerChartProps) {
     backgroundColor: colors.surface,
     backgroundGradientFrom: colors.surface,
     backgroundGradientTo: colors.surface,
-    decimalPlaces: 0, // Pas de décimales pour les km
+    decimalPlaces: 0,
     color: (opacity = 1) => colors.primary + Math.round(opacity * 255).toString(16).padStart(2, '0'),
     labelColor: (opacity = 1) => colors.text + Math.round(opacity * 255).toString(16).padStart(2, '0'),
     style: {
@@ -120,19 +112,21 @@ export default function KilometerChart({ data }: KilometerChartProps) {
       fill: colors.primary,
     },
     propsForBackgroundLines: {
-      strokeDasharray: '', // Lignes continues
+      strokeDasharray: '',
       stroke: colors.border,
       strokeWidth: 1,
     },
     propsForLabels: {
       fontSize: 12,
     },
+    formatYLabel: (yLabel: string) => formatKm(parseFloat(yLabel)),
   };
 
-  // Calcul de quelques statistiques
-  const minKm = Math.min(...chartData.datasets[0].data);
-  const maxKm = Math.max(...chartData.datasets[0].data);
-  const totalPoints = chartData.datasets[0].data.length;
+  // Calcul des statistiques
+  const realData = chartData.datasets[0].data;
+  const minKm = Math.min(...realData);
+  const maxKm = Math.max(...realData);
+  const totalPoints = realData.length;
 
   return (
     <View style={{
@@ -162,13 +156,13 @@ export default function KilometerChart({ data }: KilometerChartProps) {
         <View style={{ alignItems: 'center' }}>
           <Text style={{ color: colors.muted, fontSize: 12 }}>Min</Text>
           <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>
-            {minKm.toLocaleString()} km
+            {formatKm(minKm)} km
           </Text>
         </View>
         <View style={{ alignItems: 'center' }}>
           <Text style={{ color: colors.muted, fontSize: 12 }}>Max</Text>
           <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>
-            {maxKm.toLocaleString()} km
+            {formatKm(maxKm)} km
           </Text>
         </View>
         <View style={{ alignItems: 'center' }}>
@@ -182,10 +176,10 @@ export default function KilometerChart({ data }: KilometerChartProps) {
       {/* Graphique */}
       <LineChart
         data={chartData}
-        width={screenWidth - spacing(4) * 2} // Largeur adaptée
+        width={screenWidth - spacing(4) * 2}
         height={200}
         chartConfig={chartConfig}
-        bezier // Courbe lissée
+        bezier={true}
         style={{
           marginVertical: spacing(1),
           borderRadius: 8,
@@ -197,6 +191,7 @@ export default function KilometerChart({ data }: KilometerChartProps) {
         withScrollableDot={false}
         withInnerLines={true}
         withOuterLines={false}
+        segments={4}
       />
 
       <Text style={{ 
@@ -205,7 +200,7 @@ export default function KilometerChart({ data }: KilometerChartProps) {
         textAlign: 'center',
         marginTop: spacing(1)
       }}>
-        Évolution basée sur les historiques de maintenance
+        Évolution kilométrique • Format mm/aa
       </Text>
     </View>
   );
