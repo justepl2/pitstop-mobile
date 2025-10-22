@@ -6,9 +6,11 @@ import ScreenContainer from '../../components/ui/ScreenContainer';
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import TextInput from '../../components/ui/TextInput';
 import Button from '../../components/ui/Button';
+import ColorSelector from '../../components/ui/ColorSelector';
 import { useAuth } from '../../hooks/useAuth';
 import { MaintenanceItem, updateMaintenance } from '../../services/maintenanceService';
 import { VehicleItem } from '../../services/vehiclesService';
+import { normalizeHexColor } from '../../utils/colorUtils';
 
 type EditMaintenanceRouteProp = RouteProp<{
   EditMaintenance: { maintenance: MaintenanceItem; vehicle: VehicleItem };
@@ -27,6 +29,7 @@ export default function EditMaintenanceScreen() {
   const [intervalKm, setIntervalKm] = useState(maintenance.intervalKm ? maintenance.intervalKm.toString() : '');
   const [intervalMonth, setIntervalMonth] = useState(maintenance.intervalMonth ? maintenance.intervalMonth.toString() : '');
   const [intervalHours, setIntervalHours] = useState(maintenance.intervalHours ? maintenance.intervalHours.toString() : '');
+  const [color, setColor] = useState(normalizeHexColor(maintenance.color));
   const [loading, setLoading] = useState(false);
 
   // Vérifier quels types d'intervalles sont supportés par ce véhicule
@@ -53,6 +56,7 @@ export default function EditMaintenanceScreen() {
         intervalKm: (supportsKm && intervalKm) ? parseInt(intervalKm) : null,
         intervalMonth: (supportsMonth && intervalMonth) ? parseInt(intervalMonth) : null,
         intervalHours: (supportsHours && intervalHours) ? parseInt(intervalHours) : null,
+        color: color,
       });
 
       Alert.alert('Succès', 'Maintenance modifiée avec succès !', [
@@ -117,6 +121,13 @@ export default function EditMaintenanceScreen() {
                 returnKeyType="next"
               />
             </View>
+            
+            {/* Couleur de la maintenance */}
+            <ColorSelector
+              selectedColor={color}
+              onColorChange={setColor}
+              label="Couleur de la maintenance"
+            />
           </View>
 
           {/* Intervalles de maintenance */}

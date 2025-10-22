@@ -6,10 +6,13 @@ import ScreenContainer from '../../components/ui/ScreenContainer';
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import TextInput from '../../components/ui/TextInput';
 import Button from '../../components/ui/Button';
+import ColorSelector from '../../components/ui/ColorSelector';
 import { useAuth } from '../../hooks/useAuth';
 import { createMaintenance } from '../../services/maintenanceService';
 import { VehicleItem } from '../../services/vehiclesService';
 import { MaintenanceTemplateItem, fetchMaintenanceTemplatesByVehicleType } from '../../services/maintenanceTemplatesService';
+import { getDefaultMaintenanceColor } from '../../utils/colorUtils';
+import { getRandomColor } from '../../components/ui/ColorPicker';
 
 type AddMaintenanceRouteProp = RouteProp<{
   AddMaintenance: { vehicle: VehicleItem };
@@ -28,6 +31,7 @@ export default function AddMaintenanceScreen() {
   const [intervalKm, setIntervalKm] = useState('');
   const [intervalMonth, setIntervalMonth] = useState('');
   const [intervalHours, setIntervalHours] = useState('');
+  const [color, setColor] = useState(getRandomColor()); // Couleur aléatoire par défaut
   const [loading, setLoading] = useState(false);
 
   // États pour les templates
@@ -75,6 +79,7 @@ export default function AddMaintenanceScreen() {
     if (supportsHours) {
       setIntervalHours(template.intervalHours ? template.intervalHours.toString() : '');
     }
+    // Les templates ne contiennent pas encore de couleur, on garde la couleur par défaut
   };
 
   // Validation du formulaire
@@ -96,6 +101,7 @@ export default function AddMaintenanceScreen() {
         intervalKm: (supportsKm && intervalKm) ? parseInt(intervalKm) : null,
         intervalMonth: (supportsMonth && intervalMonth) ? parseInt(intervalMonth) : null,
         intervalHours: (supportsHours && intervalHours) ? parseInt(intervalHours) : null,
+        color: color,
       });
 
       Alert.alert('Succès', 'Maintenance créée avec succès !', [
@@ -203,6 +209,13 @@ export default function AddMaintenanceScreen() {
                 returnKeyType="next"
               />
             </View>
+            
+            {/* Couleur de la maintenance */}
+            <ColorSelector
+              selectedColor={color}
+              onColorChange={setColor}
+              label="Couleur de la maintenance"
+            />
           </View>
 
           {/* Intervalles de maintenance */}

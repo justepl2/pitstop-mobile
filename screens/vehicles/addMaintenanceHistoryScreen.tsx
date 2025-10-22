@@ -34,6 +34,7 @@ export default function AddMaintenanceHistoryScreen() {
   const [km, setKm] = useState('');
   const [hours, setHours] = useState('');
   const [details, setDetails] = useState('');
+  const [cost, setCost] = useState('');
   const [loading, setLoading] = useState(false);
 
   // États pour le mode multiple
@@ -124,6 +125,7 @@ export default function AddMaintenanceHistoryScreen() {
               date: formatDateForDB(date),
               km: (supportsKm && km) ? parseInt(km) : undefined,
               details: details.trim() || undefined,
+              cost: cost ? parseFloat(cost) : undefined,
             })
           );
         });
@@ -142,6 +144,7 @@ export default function AddMaintenanceHistoryScreen() {
           date: formatDateForDB(date),
           km: (supportsKm && km) ? parseInt(km) : undefined,
           details: details.trim() || undefined,
+          cost: cost ? parseFloat(cost) : undefined,
         });
 
         Alert.alert('Succès', 'Historique de maintenance ajouté avec succès !', [
@@ -387,7 +390,7 @@ export default function AddMaintenanceHistoryScreen() {
             )}
 
             {/* Détails */}
-            <View style={{ marginBottom: spacing(0) }}>
+            <View style={{ marginBottom: spacing(2) }}>
               <Text style={{ color: colors.text, marginBottom: spacing(1), fontWeight: '600' }}>
                 Détails et notes
               </Text>
@@ -397,6 +400,20 @@ export default function AddMaintenanceHistoryScreen() {
                 onChangeText={setDetails}
                 multiline
                 numberOfLines={3}
+                returnKeyType="next"
+              />
+            </View>
+
+            {/* Coût */}
+            <View style={{ marginBottom: spacing(0) }}>
+              <Text style={{ color: colors.text, marginBottom: spacing(1), fontWeight: '600' }}>
+                Coût (€)
+              </Text>
+              <TextInput
+                placeholder="Ex: 85.50"
+                value={cost}
+                onChangeText={setCost}
+                keyboardType="decimal-pad"
                 returnKeyType="done"
               />
             </View>

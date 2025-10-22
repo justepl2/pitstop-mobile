@@ -128,7 +128,7 @@ export default function DashboardScreen() {
               }}
               onPress={() => {
                 // @ts-ignore
-                navigation.navigate('VehicleScreen');
+                navigation.navigate('Vehicles');
               }}
             />
           </View>

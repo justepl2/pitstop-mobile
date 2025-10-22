@@ -310,11 +310,17 @@ export default function MaintenanceDetailScreen() {
                         </Text>
                         
                         {/* Informations conditionnelles */}
-                        {(history.km || history.details) && (
+                        {(history.km || history.cost || history.details) && (
                           <View style={{ gap: spacing(0.5) }}>
                             {history.km && (
                               <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '500' }}>
                                 📏 {history.km.toLocaleString()} km
+                              </Text>
+                            )}
+                            
+                            {history.cost && (
+                              <Text style={{ color: colors.success, fontSize: 14, fontWeight: '600' }}>
+                                💰 {history.cost.toFixed(2)} €
                               </Text>
                             )}
                             

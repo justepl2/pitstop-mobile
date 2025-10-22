@@ -1,6 +1,15 @@
 import { supabase } from '../lib/supabase';
 import { logSupabaseError, logCatchError, logInfo, logSuccess, logWarning } from '../utils/supabaseLogger';
 
+// Helper functions pour la conversion centimes/euros
+const centsToEuros = (cents: number | null): number | undefined => {
+  return cents ? cents / 100 : undefined;
+};
+
+const eurosToCents = (euros: number | null | undefined): number | null => {
+  return euros ? Math.round(euros * 100) : null;
+};
+
 // Types
 export interface MaintenanceHistoryItem {
   id: number;
@@ -8,6 +17,16 @@ export interface MaintenanceHistoryItem {
   km?: number;
   maintenanceIds?: number;
   details?: string;
+  cost?: number; // En euros (converti depuis les centimes stockés en DB)
+  vehicleId?: string;
+  location?: string; // Lieu ou personne qui a fait la maintenance
+  // Données enrichies optionnelles
+  vehicle?: {
+    id: string;
+    brand: string;
+    model: string;
+  };
+  maintenanceName?: string;
 }
 
 export interface NewMaintenanceHistoryInput {
@@ -15,12 +34,16 @@ export interface NewMaintenanceHistoryInput {
   km?: number;
   maintenanceIds: number;
   details?: string;
+  cost?: number; // En euros (sera converti en centimes pour la DB)
+  location?: string; // Lieu ou personne qui a fait la maintenance
 }
 
 export interface UpdateMaintenanceHistoryInput {
   date?: string;
   km?: number;
   details?: string;
+  cost?: number; // En euros (sera converti en centimes pour la DB)
+  location?: string; // Lieu ou personne qui a fait la maintenance
 }
 
 /**
@@ -35,7 +58,9 @@ export async function fetchMaintenanceHistoryById(historyId: number): Promise<Ma
         date,
         km,
         maintenance_ids,
-        details
+        details,
+        cost,
+        location
       `)
       .eq('id', historyId)
       .single();
@@ -62,6 +87,8 @@ export async function fetchMaintenanceHistoryById(historyId: number): Promise<Ma
       km: data.km || undefined,
       maintenanceIds: data.maintenance_ids || undefined,
       details: data.details || undefined,
+      cost: centsToEuros(data.cost),
+      location: data.location || undefined,
     };
   } catch (error: any) {
     console.error('Erreur dans fetchMaintenanceHistoryById:', error);
@@ -81,7 +108,10 @@ export async function fetchMaintenanceHistories(): Promise<MaintenanceHistoryIte
         date,
         km,
         maintenance_ids,
-        details
+        details,
+        cost,
+        location,
+        vehicle_id
       `)
       .order('date', { ascending: false });
 
@@ -96,10 +126,78 @@ export async function fetchMaintenanceHistories(): Promise<MaintenanceHistoryIte
       km: item.km || undefined,
       maintenanceIds: item.maintenance_ids || undefined,
       details: item.details || undefined,
+      cost: centsToEuros(item.cost),
+      location: item.location || undefined,
+      vehicleId: item.vehicle_id || undefined,
     }));
   } catch (error: any) {
     console.error('Erreur dans fetchMaintenanceHistories:', error);
     throw new Error(error.message || 'Erreur lors de la récupération des historiques de maintenance');
+  }
+}
+
+/**
+ * Récupère tous les historiques de maintenance pour un utilisateur donné
+ * Relation: maintenance_histrory -> maintenances -> vehicles
+ */
+export async function fetchMaintenanceHistoriesByUser(userId: string): Promise<MaintenanceHistoryItem[]> {
+  try {
+    const { data, error } = await supabase
+      .from('maintenance_histrory')
+      .select(`
+        id,
+        date,
+        km,
+        maintenance_ids,
+        details,
+        cost,
+        location,
+        maintenances!inner(
+          id,
+          vehicle_id,
+          name,
+          vehicles!inner(
+            id,
+            brand,
+            model,
+            user_id
+          )
+        )
+      `)
+      .eq('maintenances.vehicles.user_id', userId)
+      .order('date', { ascending: false });
+
+    if (error) {
+      console.error('Erreur Supabase dans fetchMaintenanceHistoriesByUser:', error);
+      throw new Error(error.message);
+    }
+
+    return (data || []).map(item => {
+      // Cast pour éviter les erreurs TypeScript - on sait par les logs que la structure est correcte
+      const maintenances = item.maintenances as any;
+      
+      return {
+        id: item.id,
+        date: item.date || undefined,
+        km: item.km || undefined,
+        maintenanceIds: item.maintenance_ids || undefined,
+        details: item.details || undefined,
+        cost: centsToEuros(item.cost),
+        location: item.location || undefined,
+        vehicleId: maintenances?.vehicle_id || undefined,
+        // Enrichir directement avec les infos du véhicule
+        vehicle: maintenances?.vehicles ? {
+          id: maintenances.vehicles.id,
+          brand: maintenances.vehicles.brand,
+          model: maintenances.vehicles.model
+        } : undefined,
+        // Enrichir avec le nom de la maintenance
+        maintenanceName: maintenances?.name || undefined,
+      };
+    });
+  } catch (error: any) {
+    console.error('Erreur dans fetchMaintenanceHistoriesByUser:', error);
+    throw new Error(error.message || 'Erreur lors de la récupération des historiques de maintenance de l\'utilisateur');
   }
 }
 
@@ -116,6 +214,8 @@ export async function fetchMaintenanceHistoriesByVehicle(vehicleId: string): Pro
         km,
         maintenance_ids,
         details,
+        cost,
+        location,
         maintenances!inner(vehicle_id)
       `)
       .eq('maintenances.vehicle_id', vehicleId)
@@ -134,6 +234,8 @@ export async function fetchMaintenanceHistoriesByVehicle(vehicleId: string): Pro
       km: item.km || undefined,
       maintenanceIds: item.maintenance_ids || undefined,
       details: item.details || undefined,
+      cost: centsToEuros(item.cost),
+      location: item.location || undefined,
     }));
   } catch (error: any) {
     console.error('Erreur dans fetchMaintenanceHistoriesByVehicle:', error);
@@ -228,7 +330,9 @@ export async function fetchMaintenanceHistoriesByMaintenance(maintenanceId: numb
         date,
         km,
         maintenance_ids,
-        details
+        details,
+        cost,
+        location
       `)
       .eq('maintenance_ids', maintenanceId)
       .order('date', { ascending: false });
@@ -244,6 +348,8 @@ export async function fetchMaintenanceHistoriesByMaintenance(maintenanceId: numb
       km: item.km || undefined,
       maintenanceIds: item.maintenance_ids || undefined,
       details: item.details || undefined,
+      cost: centsToEuros(item.cost),
+      location: item.location || undefined,
     }));
   } catch (error: any) {
     console.error('Erreur dans fetchMaintenanceHistoriesByMaintenance:', error);
@@ -263,13 +369,17 @@ export async function createMaintenanceHistory(input: NewMaintenanceHistoryInput
         km: input.km || null,
         maintenance_ids: input.maintenanceIds,
         details: input.details || null,
+        cost: eurosToCents(input.cost),
+        location: input.location || null,
       })
       .select(`
         id,
         date,
         km,
         maintenance_ids,
-        details
+        details,
+        cost,
+        location
       `)
       .single();
 
@@ -288,6 +398,7 @@ export async function createMaintenanceHistory(input: NewMaintenanceHistoryInput
       km: data.km || undefined,
       maintenanceIds: data.maintenance_ids || undefined,
       details: data.details || undefined,
+      cost: centsToEuros(data.cost),
     };
   } catch (error: any) {
     console.error('Erreur dans createMaintenanceHistory:', error);
@@ -306,6 +417,8 @@ export async function updateMaintenanceHistory(historyId: number, input: UpdateM
         date: input.date !== undefined ? input.date : undefined,
         km: input.km !== undefined ? input.km : undefined,
         details: input.details !== undefined ? input.details : undefined,
+        cost: input.cost !== undefined ? eurosToCents(input.cost) : undefined,
+        location: input.location !== undefined ? input.location : undefined,
       })
       .eq('id', historyId)
       .select(`
@@ -313,7 +426,9 @@ export async function updateMaintenanceHistory(historyId: number, input: UpdateM
         date,
         km,
         maintenance_ids,
-        details
+        details,
+        cost,
+        location
       `)
       .single();
 
@@ -332,6 +447,7 @@ export async function updateMaintenanceHistory(historyId: number, input: UpdateM
       km: data.km || undefined,
       maintenanceIds: data.maintenance_ids || undefined,
       details: data.details || undefined,
+      cost: centsToEuros(data.cost),
     };
   } catch (error: any) {
     console.error('Erreur dans updateMaintenanceHistory:', error);
@@ -371,7 +487,9 @@ export async function searchMaintenanceHistories(query: string, limit = 20): Pro
         date,
         km,
         maintenance_ids,
-        details
+        details,
+        cost,
+        location
       `)
       .ilike('details', `%${query}%`)
       .order('date', { ascending: false })
@@ -388,6 +506,8 @@ export async function searchMaintenanceHistories(query: string, limit = 20): Pro
       km: item.km || undefined,
       maintenanceIds: item.maintenance_ids || undefined,
       details: item.details || undefined,
+      cost: centsToEuros(item.cost),
+      location: item.location || undefined,
     }));
   } catch (error: any) {
     console.error('Erreur dans searchMaintenanceHistories:', error);
@@ -431,6 +551,7 @@ export async function getLastMaintenanceHistoryForType(vehicleId: string, mainte
       km: data.km || undefined,
       maintenanceIds: data.maintenance_ids || undefined,
       details: data.details || undefined,
+      cost: centsToEuros(data.cost),
     };
   } catch (error: any) {
     logCatchError('getLastMaintenanceHistoryForType', error, {

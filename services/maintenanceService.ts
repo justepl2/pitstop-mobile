@@ -8,6 +8,7 @@ export type MaintenanceItem = {
   intervalKm: number | null;
   intervalMonth: number | null;
   intervalHours: number | null;
+  color?: string | null; // Couleur personnalisée pour l'affichage
 };
 
 export type NewMaintenanceInput = {
@@ -16,6 +17,7 @@ export type NewMaintenanceInput = {
   intervalKm?: number | null;
   intervalMonth?: number | null;
   intervalHours?: number | null;
+  color?: string | null; // Couleur personnalisée pour l'affichage
 };
 
 export type UpdateMaintenanceInput = {
@@ -23,6 +25,7 @@ export type UpdateMaintenanceInput = {
   intervalKm?: number | null;
   intervalMonth?: number | null;
   intervalHours?: number | null;
+  color?: string | null; // Couleur personnalisée pour l'affichage
 };
 
 // CREATE - Créer une nouvelle maintenance
@@ -34,6 +37,7 @@ export async function createMaintenance(userId: string, input: NewMaintenanceInp
     interval_km: input.intervalKm ?? null,
     interval_month: input.intervalMonth ?? null,
     interval_hours: input.intervalHours ?? null,
+    color: input.color ?? null,
   };
 
   const { data, error } = await supabase
@@ -46,7 +50,8 @@ export async function createMaintenance(userId: string, input: NewMaintenanceInp
       vehicle_id,
       interval_km,
       interval_month,
-      interval_hours
+      interval_hours,
+      color
     `)
     .single();
 
@@ -62,6 +67,7 @@ export async function createMaintenance(userId: string, input: NewMaintenanceInp
     intervalKm: data.interval_km,
     intervalMonth: data.interval_month,
     intervalHours: data.interval_hours,
+    color: data.color,
   };
 }
 
@@ -76,7 +82,8 @@ export async function fetchMaintenanceById(maintenanceId: number, userId: string
       vehicle_id,
       interval_km,
       interval_month,
-      interval_hours
+      interval_hours,
+      color
     `)
     .eq('id', maintenanceId)
     .eq('user_id', userId)
@@ -98,6 +105,7 @@ export async function fetchMaintenanceById(maintenanceId: number, userId: string
     intervalKm: data.interval_km,
     intervalMonth: data.interval_month,
     intervalHours: data.interval_hours,
+    color: data.color,
   };
 }
 
@@ -112,7 +120,8 @@ export async function fetchMaintenances(userId: string): Promise<MaintenanceItem
       vehicle_id,
       interval_km,
       interval_month,
-      interval_hours
+      interval_hours,
+      color
     `)
     .eq('user_id', userId)
     .order('name', { ascending: true });
@@ -129,6 +138,7 @@ export async function fetchMaintenances(userId: string): Promise<MaintenanceItem
     intervalKm: maintenance.interval_km,
     intervalMonth: maintenance.interval_month,
     intervalHours: maintenance.interval_hours,
+    color: maintenance.color,
   }));
 }
 
@@ -143,7 +153,8 @@ export async function fetchMaintenancesByVehicle(vehicleId: string, userId: stri
       vehicle_id,
       interval_km,
       interval_month,
-      interval_hours
+      interval_hours,
+      color
     `)
     .eq('vehicle_id', vehicleId)
     .eq('user_id', userId)
@@ -161,6 +172,7 @@ export async function fetchMaintenancesByVehicle(vehicleId: string, userId: stri
     intervalKm: maintenance.interval_km,
     intervalMonth: maintenance.interval_month,
     intervalHours: maintenance.interval_hours,
+    color: maintenance.color,
   }));
 }
 
@@ -176,6 +188,7 @@ export async function updateMaintenance(
   if (input.intervalKm !== undefined) payload.interval_km = input.intervalKm;
   if (input.intervalMonth !== undefined) payload.interval_month = input.intervalMonth;
   if (input.intervalHours !== undefined) payload.interval_hours = input.intervalHours;
+  if (input.color !== undefined) payload.color = input.color;
 
   const { data, error } = await supabase
     .from('maintenances')
@@ -189,7 +202,8 @@ export async function updateMaintenance(
       vehicle_id,
       interval_km,
       interval_month,
-      interval_hours
+      interval_hours,
+      color
     `)
     .single();
 
@@ -209,6 +223,7 @@ export async function updateMaintenance(
     intervalKm: data.interval_km,
     intervalMonth: data.interval_month,
     intervalHours: data.interval_hours,
+    color: data.color,
   };
 }
 
@@ -240,7 +255,8 @@ export async function searchMaintenances(query: string, userId: string): Promise
       vehicle_id,
       interval_km,
       interval_month,
-      interval_hours
+      interval_hours,
+      color
     `)
     .eq('user_id', userId)
     .ilike('name', `%${query}%`)
@@ -259,5 +275,6 @@ export async function searchMaintenances(query: string, userId: string): Promise
     intervalKm: maintenance.interval_km,
     intervalMonth: maintenance.interval_month,
     intervalHours: maintenance.interval_hours,
+    color: maintenance.color,
   }));
 }
