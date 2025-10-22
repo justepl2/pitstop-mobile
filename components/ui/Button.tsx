@@ -213,7 +213,7 @@ export default function Button({
                     name={icon.name as any}
                     size={getIconSize()}
                     color={getTextColor()}
-                    style={{ marginRight: spacing(1) }}
+                    style={{ marginRight: title === '' ? 0 : spacing(1) }}
                   />
                 )}
                 {icon.family === 'Ionicons' && (
@@ -221,7 +221,7 @@ export default function Button({
                     name={icon.name as any}
                     size={getIconSize()}
                     color={getTextColor()}
-                    style={{ marginRight: spacing(1) }}
+                    style={{ marginRight: title === '' ? 0 : spacing(1) }}
                   />
                 )}
                 {icon.family === 'FontAwesome' && (
@@ -229,7 +229,7 @@ export default function Button({
                     name={icon.name as any}
                     size={getIconSize()}
                     color={getTextColor()}
-                    style={{ marginRight: spacing(1) }}
+                    style={{ marginRight: title === '' ? 0 : spacing(1) }}
                   />
                 )}
                 {icon.family === 'Feather' && (
@@ -237,7 +237,7 @@ export default function Button({
                     name={icon.name as any}
                     size={getIconSize()}
                     color={getTextColor()}
-                    style={{ marginRight: spacing(1) }}
+                    style={{ marginRight: title === '' ? 0 : spacing(1) }}
                   />
                 )}
               </>

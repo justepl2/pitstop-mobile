@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/themeProvider';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import ScreenContainer from '../../components/ui/ScreenContainer';
@@ -164,10 +165,11 @@ export default function MaintenanceDetailScreen() {
           subtitle={vehicleName}
           action={
             <Button
-              title="🗑️"
+              title=""
+              icon={{ family: 'Ionicons', name: 'trash-outline' }}
               onPress={handleDelete}
               variant="ghost"
-              size="small"
+              size="sm"
             />
           }
         />
@@ -257,7 +259,8 @@ export default function MaintenanceDetailScreen() {
               />
 
               <Button
-                title="🗑️ Supprimer cette maintenance"
+                title="Supprimer cette maintenance"
+                icon={{ family: 'Ionicons', name: 'trash-outline' }}
                 onPress={handleDelete}
                 variant="danger"
               />
@@ -274,7 +277,7 @@ export default function MaintenanceDetailScreen() {
             borderColor: colors.border,
           }}>
             <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: spacing(2) }}>
-              📅 Historique
+              <Ionicons name="calendar-outline" size={18} color={colors.text} /> Historique
             </Text>
 
             {loadingHistory ? (
@@ -306,7 +309,7 @@ export default function MaintenanceDetailScreen() {
                           fontWeight: '600', 
                           marginBottom: spacing(1)
                         }}>
-                          📅 {history.date ? new Date(history.date).toLocaleDateString('fr-FR') : 'Date non renseignée'}
+                          <Ionicons name="calendar-outline" size={14} color={colors.text} /> {history.date ? new Date(history.date).toLocaleDateString('fr-FR') : 'Date non renseignée'}
                         </Text>
                         
                         {/* Informations conditionnelles */}
@@ -314,13 +317,13 @@ export default function MaintenanceDetailScreen() {
                           <View style={{ gap: spacing(0.5) }}>
                             {history.km && (
                               <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '500' }}>
-                                📏 {history.km.toLocaleString()} km
+                                <Ionicons name="speedometer-outline" size={14} color={colors.primary} /> {history.km.toLocaleString()} km
                               </Text>
                             )}
                             
                             {history.cost && (
                               <Text style={{ color: colors.success, fontSize: 14, fontWeight: '600' }}>
-                                💰 {history.cost.toFixed(2)} €
+                                <Ionicons name="card-outline" size={14} color={colors.success} /> {history.cost.toFixed(2)} €
                               </Text>
                             )}
                             
@@ -350,7 +353,7 @@ export default function MaintenanceDetailScreen() {
                           marginLeft: spacing(1),
                         }}
                       >
-                        <Text style={{ color: '#ff4444', fontSize: 16 }}>🗑️</Text>
+                        <Ionicons name="trash-outline" size={16} color="#ff4444" />
                       </TouchableOpacity>
                     </View>
                   </View>

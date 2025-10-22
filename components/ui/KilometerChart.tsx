@@ -69,13 +69,6 @@ export default function KilometerChart({ data }: KilometerChartProps) {
       }}>
         <Text style={{ 
           color: colors.muted, 
-          fontSize: 16,
-          textAlign: 'center'
-        }}>
-          📊 Suivi kilométrique
-        </Text>
-        <Text style={{ 
-          color: colors.muted, 
           fontSize: 14,
           textAlign: 'center',
           marginTop: spacing(1)
@@ -130,22 +123,13 @@ export default function KilometerChart({ data }: KilometerChartProps) {
 
   return (
     <View style={{
-      backgroundColor: colors.surface,
-      borderRadius: 12,
-      padding: spacing(2),
-      marginBottom: spacing(3),
-      borderWidth: 1,
-      borderColor: colors.border,
+      // backgroundColor: colors.surface,
+      // borderRadius: 12,
+      // padding: spacing(2),
+      // marginBottom: spacing(3),
+      // borderWidth: 1,
+      // borderColor: colors.border,
     }}>
-      <Text style={{ 
-        fontSize: 18, 
-        fontWeight: '700', 
-        color: colors.text, 
-        marginBottom: spacing(1)
-      }}>
-        📊 Suivi kilométrique
-      </Text>
-
       {/* Statistiques rapides */}
       <View style={{ 
         flexDirection: 'row', 
@@ -176,7 +160,7 @@ export default function KilometerChart({ data }: KilometerChartProps) {
       {/* Graphique */}
       <LineChart
         data={chartData}
-        width={screenWidth - spacing(4) * 2}
+        width={screenWidth - spacing(5) * 2}
         height={200}
         chartConfig={chartConfig}
         bezier={true}

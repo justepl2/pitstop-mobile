@@ -166,7 +166,7 @@ export default function MaintenancesScreen() {
               fontSize: 12,
               fontWeight: '600',
             }}>
-  {item.maintenanceName || item.maintenanceType?.name || 'Type inconnu'}
+            {item.vehicle ? `${item.vehicle?.brand + ' ' + item.vehicle?.model}` : 'Type inconnu'}
             </Text>
           </View>
           
@@ -182,7 +182,7 @@ export default function MaintenancesScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Véhicule */}
+        {/* Maintenance type */}
         <Text style={{
           fontSize: 18,
           fontWeight: '700',
@@ -190,7 +190,7 @@ export default function MaintenancesScreen() {
           marginBottom: spacing(1),
           textTransform: 'capitalize',
         }}>
-          {item.vehicle ? `${item.vehicle.brand} ${item.vehicle.model}` : 'Véhicule inconnu'}
+          {item.maintenanceName || item.maintenanceType?.name || 'Type inconnu'}
         </Text>
 
         {/* Date et km */}
@@ -303,7 +303,7 @@ export default function MaintenancesScreen() {
   }
 
   return (
-    <ScreenContainer padding={false} edges={['left', 'right', 'bottom']}>
+    <ScreenContainer padding={false} edges={['left', 'right']}>
       <ScrollView 
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: spacing(4) }}
@@ -342,7 +342,8 @@ export default function MaintenancesScreen() {
           
           {/* Bouton Nouvel Entretien */}
           <Button
-            title="+ Nouvel Entretien"
+            title="Nouvel Entretien"
+            icon={{ family: 'Ionicons', name: 'add' }}
             onPress={() => {
               // Navigation vers nouvel entretien
             }}

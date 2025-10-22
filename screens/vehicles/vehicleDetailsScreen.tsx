@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/themeProvider';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import ScreenContainer from '../../components/ui/ScreenContainer';
@@ -213,35 +214,63 @@ export default function VehicleDetailsScreen() {
   }
 
   return (
-    <>
-      <View style={{ 
-        backgroundColor: colors.background, 
-        paddingTop: spacing(2),
-        paddingHorizontal: spacing(2)
-      }}>
-        <ScreenHeader
-          title={`${vehicle.brand} ${vehicle.model}`}
-          subtitle={vehicle.registration || 'Immatriculation non renseignée'}
-          action={
+    <ScreenContainer padding={false} edges={['left', 'right', 'bottom']}>
+      <ScrollView 
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: spacing(4) }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header Section */}
+        <View style={{
+          backgroundColor: colors.background,
+          paddingHorizontal: spacing(3),
+          paddingTop: spacing(1),
+          paddingBottom: spacing(2),
+        }}>
+          {/* Titre principal avec bouton */}
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: spacing(0.5),
+          }}>
+            <Text style={{
+              fontSize: 32,
+              fontWeight: '800',
+              color: colors.text,
+              flex: 1,
+            }}>
+              {vehicle.brand} {vehicle.model}
+            </Text>
+            
+            {/* Bouton Supprimer */}
             <Button
-              title="🗑️"
+              title=""
+              icon={{ family: 'Ionicons', name: 'trash-outline' }}
               onPress={handleDelete}
-              variant="ghost"
-                  size="sm"
+              variant="danger"
+              size="sm"
+              fullWidth={false}
             />
-          }
-        />
-      </View>
-      
-      <ScreenContainer padding={false} edges={['bottom', 'left', 'right']}>
+          </View>
+          
+          {/* Sous-titre */}
+          <Text style={{
+            fontSize: 16,
+            color: colors.textMuted,
+            marginBottom: spacing(3),
+          }}>
+            {vehicle.registration || 'Immatriculation non renseignée'}
+          </Text>
+        </View>
+
         {/* Onglets */}
         <View style={{
           flexDirection: 'row',
           backgroundColor: colors.background,
           borderBottomWidth: 1,
           borderBottomColor: colors.border,
-          marginHorizontal: spacing(2),
-          marginTop: spacing(1),
+          marginHorizontal: spacing(3),
         }}>
           <TouchableOpacity
             style={{
@@ -258,7 +287,7 @@ export default function VehicleDetailsScreen() {
               fontWeight: activeTab === 'vehicle' ? '600' : '400',
               color: activeTab === 'vehicle' ? colors.primary : colors.text,
             }}>
-              🏍️ Véhicule
+              Véhicule
             </Text>
           </TouchableOpacity>
           
@@ -277,25 +306,41 @@ export default function VehicleDetailsScreen() {
               fontWeight: activeTab === 'maintenance' ? '600' : '400',
               color: activeTab === 'maintenance' ? colors.primary : colors.text,
             }}>
-              🔧 Maintenances
+              Maintenances
             </Text>
           </TouchableOpacity>
         </View>
 
-        <ScrollView 
-          showsVerticalScrollIndicator={false} 
-          contentContainerStyle={{ paddingBottom: spacing(4), padding: spacing(2), paddingTop: spacing(1) }}
-        >
+        {/* Contenu */}
+        <View style={{
+          paddingHorizontal: spacing(3),
+          paddingTop: spacing(2),
+        }}>
         
         {/* Contenu de l'onglet Véhicule */}
         {activeTab === 'vehicle' && (
           <>
             {/* Graphique kilométrique */}
-            {!loadingKmHistory && <KilometerChart data={kmHistory} />}
+            {!loadingKmHistory && (
+              <View style={{ marginBottom: spacing(3) }}>
+                <Card padding="md" shadow="md">
+                    <Text style={{ 
+                      fontSize: 20, 
+                      fontWeight: '700', 
+                      color: colors.text, 
+                      marginBottom: spacing(2),
+                      letterSpacing: -0.3
+                    }}>
+                      <Ionicons name="bar-chart-outline" size={20} color={colors.text} /> Historique kilométrique
+                    </Text>
+                    <KilometerChart data={kmHistory} />
+                </Card>
+              </View>
+            )}
 
-                {/* Informations générales */}
-                <View style={{ marginBottom: spacing(3) }}>
-                  <Card padding="md" shadow="md">
+              {/* Informations générales */}
+              <View style={{ marginBottom: spacing(3) }}>
+                <Card padding="md" shadow="md">
                   <Text style={{ 
                     fontSize: 20, 
                     fontWeight: '700', 
@@ -303,56 +348,56 @@ export default function VehicleDetailsScreen() {
                     marginBottom: spacing(2),
                     letterSpacing: -0.3
                   }}>
-                    📋 Informations générales
+                    <Ionicons name="clipboard-outline" size={20} color={colors.text} /> Informations générales
                   </Text>
 
-              <InfoRow label="Marque" value={vehicle.brand} colors={colors} spacing={spacing} />
-              <InfoRow label="Modèle" value={vehicle.model} colors={colors} spacing={spacing} />
-              {vehicle.year && <InfoRow label="Année" value={vehicle.year.toString()} colors={colors} spacing={spacing} />}
-              <InfoRow label="Kilométrage" value={`${vehicle.kilometers} km`} colors={colors} spacing={spacing} />
-              {vehicle.registration && <InfoRow label="Immatriculation" value={vehicle.registration} colors={colors} spacing={spacing} />}
-                  </Card>
-                </View>
+                  <InfoRow label="Marque" value={vehicle.brand} colors={colors} spacing={spacing} />
+                  <InfoRow label="Modèle" value={vehicle.model} colors={colors} spacing={spacing} />
+                  {vehicle.year && <InfoRow label="Année" value={vehicle.year.toString()} colors={colors} spacing={spacing} />}
+                  <InfoRow label="Kilométrage" value={`${vehicle.kilometers} km`} colors={colors} spacing={spacing} />
+                  {vehicle.registration && <InfoRow label="Immatriculation" value={vehicle.registration} colors={colors} spacing={spacing} />}
+                </Card>
+              </View>
 
-            {/* Informations techniques */}
-            <View style={{ marginBottom: spacing(3) }}>
-              <Card padding="md" shadow="md">
-              <Text style={{ 
-                fontSize: 20, 
-                fontWeight: '700', 
-                color: colors.text, 
-                marginBottom: spacing(2),
-                letterSpacing: -0.3
-              }}>
-                ⚙️ Informations techniques
-              </Text>
+              {/* Informations techniques */}
+              <View style={{ marginBottom: spacing(3) }}>
+                <Card padding="md" shadow="md">
+                  <Text style={{ 
+                    fontSize: 20, 
+                    fontWeight: '700', 
+                    color: colors.text, 
+                    marginBottom: spacing(2),
+                    letterSpacing: -0.3
+                  }}>
+                    <Ionicons name="settings-outline" size={20} color={colors.text} /> Informations techniques
+                  </Text>
 
-              {vehicle.vehicleType && <InfoRow label="Type" value={vehicle.vehicleType.name} colors={colors} spacing={spacing} />}
-              {vehicle.fuel && <InfoRow label="Carburant" value={vehicle.fuel.name} colors={colors} spacing={spacing} />}
-              {vehicle.engineSize && <InfoRow label="Cylindrée" value={`${vehicle.engineSize} cc`} colors={colors} spacing={spacing} />}
-              {vehicle.numberOfCylinders && <InfoRow label="Nombre de cylindres" value={vehicle.numberOfCylinders.toString()} colors={colors} spacing={spacing} />}
-              
-              {(!vehicle.vehicleType && !vehicle.fuel && !vehicle.engineSize && !vehicle.numberOfCylinders) && (
-                <Text style={{ color: colors.textMuted, fontStyle: 'italic' }}>
-                  Aucune information technique renseignée
-                </Text>
-              )}
-              </Card>
-            </View>
+                  {vehicle.vehicleType && <InfoRow label="Type" value={vehicle.vehicleType.name} colors={colors} spacing={spacing} />}
+                  {vehicle.fuel && <InfoRow label="Carburant" value={vehicle.fuel.name} colors={colors} spacing={spacing} />}
+                  {vehicle.engineSize && <InfoRow label="Cylindrée" value={`${vehicle.engineSize} cc`} colors={colors} spacing={spacing} />}
+                  {vehicle.numberOfCylinders && <InfoRow label="Nombre de cylindres" value={vehicle.numberOfCylinders.toString()} colors={colors} spacing={spacing} />}
+                  
+                  {(!vehicle.vehicleType && !vehicle.fuel && !vehicle.engineSize && !vehicle.numberOfCylinders) && (
+                    <Text style={{ color: colors.textMuted, fontStyle: 'italic' }}>
+                      Aucune information technique renseignée
+                    </Text>
+                  )}
+                </Card>
+              </View>
 
-            {/* Informations détaillées de la moto (si disponible) */}
-            {motorcycle && (
-              <View style={{
-                backgroundColor: colors.surface,
-                borderRadius: 12,
-                padding: spacing(2),
-                marginBottom: spacing(2),
-                borderWidth: 1,
-                borderColor: colors.border,
-              }}>
-                <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: spacing(2) }}>
-                  Spécifications techniques
-                </Text>
+              {/* Informations détaillées de la moto (si disponible) */}
+              {motorcycle && (
+                <View style={{ marginBottom: spacing(3) }}>
+                  <Card padding="md" shadow="md">
+                    <Text style={{ 
+                      fontSize: 20, 
+                      fontWeight: '700', 
+                      color: colors.text, 
+                      marginBottom: spacing(2),
+                      letterSpacing: -0.3
+                    }}>
+                      <Ionicons name="construct-outline" size={20} color={colors.text} /> Spécifications techniques
+                    </Text>
 
                 {/* Moteur et Performance */}
                 {(motorcycle.displacement || motorcycle.power || motorcycle.torque || motorcycle.engineType || motorcycle.engineStroke) && (
@@ -412,28 +457,30 @@ export default function VehicleDetailsScreen() {
                     <InfoRow label="Type" value={motorcycle.category} colors={colors} spacing={spacing} />
                   </>
                 )}
-              </View>
-            )}
-          </>
-        )}
+                  </Card>
+                </View>
+              )}
+            </>
+          )}
 
-        {/* Contenu de l'onglet Maintenances */}
-        {activeTab === 'maintenance' && (
-          <View style={{
-            backgroundColor: colors.surface,
-            borderRadius: 12,
-            padding: spacing(2),
-            marginBottom: spacing(2),
-            borderWidth: 1,
-            borderColor: colors.border,
-          }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: spacing(2) }}>
-              Maintenances
-            </Text>
+          {/* Contenu de l'onglet Maintenances */}
+          {activeTab === 'maintenance' && (
+            <View style={{ marginBottom: spacing(3) }}>
+              <Card padding="md" shadow="md">
+                <Text style={{ 
+                  fontSize: 20, 
+                  fontWeight: '700', 
+                  color: colors.text, 
+                  marginBottom: spacing(2),
+                  letterSpacing: -0.3
+                }}>
+                  <Ionicons name="construct-outline" size={20} color={colors.text} /> Maintenances
+                </Text>
 
             <View style={{ marginBottom: spacing(2), gap: spacing(1) }}>
               <Button
-                title="+ Nouvelle maintenance"
+                title="Nouvelle maintenance"
+                icon={{ family: 'Ionicons', name: 'add' }}
                 onPress={() => (navigation as any).navigate('AddMaintenance', { 
                   vehicle: vehicle
                 })}
@@ -441,7 +488,8 @@ export default function VehicleDetailsScreen() {
               />
               
               <Button
-                title="📅 Historique global"
+                title="Historique global"
+                icon={{ family: 'Ionicons', name: 'calendar-outline' }}
                 onPress={() => (navigation as any).navigate('AddMaintenanceHistory', { 
                   vehicle: vehicle,
                   multipleMode: true
@@ -520,7 +568,7 @@ export default function VehicleDetailsScreen() {
                                 fontSize: 12, 
                                 fontWeight: '500' 
                               }}>
-                                📏 {maintenance.intervalKm.toLocaleString()} km
+                                <Ionicons name="speedometer-outline" size={12} color={isKmOverdue ? '#ff4444' : colors.text} /> {maintenance.intervalKm.toLocaleString()} km
                               </Text>
                             );
                           })()}
@@ -535,7 +583,7 @@ export default function VehicleDetailsScreen() {
                                 fontSize: 12, 
                                 fontWeight: '500' 
                               }}>
-                                📅 {maintenance.intervalMonth} mois
+                                <Ionicons name="calendar-outline" size={12} color={isMonthOverdue ? '#ff4444' : colors.text} /> {maintenance.intervalMonth} mois
                               </Text>
                             );
                           })()}
@@ -550,7 +598,7 @@ export default function VehicleDetailsScreen() {
                                 fontSize: 12, 
                                 fontWeight: '500' 
                               }}>
-                                ⏱️ {maintenance.intervalHours}h
+                                <Ionicons name="time-outline" size={12} color={isHourOverdue ? '#ff4444' : colors.text} /> {maintenance.intervalHours}h
                               </Text>
                             );
                           })()}
@@ -590,16 +638,16 @@ export default function VehicleDetailsScreen() {
                   })}
               </View>
             ) : (
-              <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', fontStyle: 'italic' }}>
-                Aucune maintenance programmée
-              </Text>
-            )}
-          </View>
-        )}
-        
-        </ScrollView>
-      </ScreenContainer>
-    </>
+                <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', fontStyle: 'italic' }}>
+                  Aucune maintenance programmée
+                </Text>
+              )}
+              </Card>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </ScreenContainer>
   );
 }
 

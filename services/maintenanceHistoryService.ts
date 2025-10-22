@@ -562,3 +562,71 @@ export async function getLastMaintenanceHistoryForType(vehicleId: string, mainte
     return null;
   }
 }
+
+/**
+ * Récupère tous les historiques de maintenance enrichis avec véhicules et types
+ * en UNE SEULE requête via une fonction Supabase
+ */
+export async function fetchEnrichedMaintenanceHistories(userId: string): Promise<MaintenanceWithDetails[]> {
+  try {
+    const { data, error } = await supabase.rpc('get_enriched_maintenance_history', {
+      p_user_id: userId
+    });
+
+    if (error) {
+      console.error('Erreur RPC get_enriched_maintenance_history:', error);
+      throw new Error(error.message);
+    }
+
+    return (data || []).map((item: any) => ({
+      // Données de l'historique
+      id: item.id,
+      date: item.date || undefined,
+      km: item.km || undefined,
+      maintenanceIds: item.maintenance_ids || undefined,
+      details: item.details || undefined,
+      cost: centsToEuros(item.cost),
+      location: item.location || undefined,
+      vehicleId: item.vehicle_id || undefined,
+      
+      // Véhicule enrichi
+      vehicle: item.vehicle_id ? {
+        id: item.vehicle_id,
+        brand: item.vehicle_brand,
+        model: item.vehicle_model,
+        engineSize: item.vehicle_engine_size,
+        year: item.vehicle_year,
+        kilometers: item.vehicle_kilometers,
+        registrationNumber: item.vehicle_registration_number,
+        fuel: item.vehicle_fuel,
+        vehicleType: item.vehicle_type,
+      } : undefined,
+      
+      // Type de maintenance enrichi
+      maintenanceType: item.maintenance_ids ? {
+        id: item.maintenance_ids,
+        name: item.maintenance_name,
+        color: item.maintenance_color,
+        intervalKm: item.maintenance_interval_km,
+        intervalMonth: item.maintenance_interval_month,
+      } : undefined,
+      
+      // Nom de la maintenance (pour compatibilité)
+      maintenanceName: item.maintenance_name || undefined,
+    }));
+  } catch (error: any) {
+    console.error('Erreur dans fetchEnrichedMaintenanceHistories:', error);
+    throw new Error(error.message || 'Erreur lors de la récupération des historiques enrichis');
+  }
+}
+
+// Type pour les données enrichies
+export interface MaintenanceWithDetails extends MaintenanceHistoryItem {
+  maintenanceType?: {
+    id: number;
+    name: string;
+    color: string;
+    intervalKm?: number;
+    intervalMonth?: number;
+  };
+}

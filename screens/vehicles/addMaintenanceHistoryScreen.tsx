@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Alert, Platform, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/themeProvider';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import ScreenContainer from '../../components/ui/ScreenContainer';
@@ -296,17 +297,17 @@ export default function AddMaintenanceHistoryScreen() {
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}>
                           {maintenanceItem.intervalKm && (
                             <Text style={{ color: colors.muted, fontSize: 12 }}>
-                              📏 {maintenanceItem.intervalKm.toLocaleString()} km
+                              <Ionicons name="speedometer-outline" size={12} color={colors.muted} /> {maintenanceItem.intervalKm.toLocaleString()} km
                             </Text>
                           )}
                           {maintenanceItem.intervalMonth && (
                             <Text style={{ color: colors.muted, fontSize: 12 }}>
-                              📅 {maintenanceItem.intervalMonth} mois
+                              <Ionicons name="calendar-outline" size={12} color={colors.muted} /> {maintenanceItem.intervalMonth} mois
                             </Text>
                           )}
                           {maintenanceItem.intervalHours && (
                             <Text style={{ color: colors.muted, fontSize: 12 }}>
-                              ⏱️ {maintenanceItem.intervalHours}h
+                              <Ionicons name="time-outline" size={12} color={colors.muted} /> {maintenanceItem.intervalHours}h
                             </Text>
                           )}
                         </View>
@@ -462,17 +463,17 @@ export default function AddMaintenanceHistoryScreen() {
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}>
                   {maintenance.intervalKm && (
                     <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '500' }}>
-                      📏 {maintenance.intervalKm.toLocaleString()} km
+                      <Ionicons name="speedometer-outline" size={12} color={colors.primary} /> {maintenance.intervalKm.toLocaleString()} km
                     </Text>
                   )}
                   {maintenance.intervalMonth && (
                     <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '500' }}>
-                      📅 {maintenance.intervalMonth} mois
+                      <Ionicons name="calendar-outline" size={12} color={colors.primary} /> {maintenance.intervalMonth} mois
                     </Text>
                   )}
                   {maintenance.intervalHours && (
                     <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '500' }}>
-                      ⏱️ {maintenance.intervalHours}h
+                      <Ionicons name="time-outline" size={12} color={colors.primary} /> {maintenance.intervalHours}h
                     </Text>
                   )}
                 </View>
